@@ -64,7 +64,7 @@ LICENSE
 *.md
 docs/
 boilerplate.md
-prompt.md
+reference.md
 
 # Misc
 .editorconfig
