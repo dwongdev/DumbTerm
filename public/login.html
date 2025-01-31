@@ -4,11 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DumbTitle</title>
-    <link rel="stylesheet" href="/styles.css">
+    <script src="config.js"></script>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <main>
-        <form id="pinForm" action="/verify-pin" method="POST">
+        <form id="pinForm" action="verify-pin" method="POST">
             <button id="themeToggle" aria-label="Toggle theme" type="button">
                 <svg class="moon" viewBox="0 0 24 24">
                     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
@@ -31,6 +32,6 @@
             <div class="pin-error" role="alert" aria-hidden="true">Incorrect PIN. Please try again.</div>
         </form>
     </main>
-    <script src="/script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html> 

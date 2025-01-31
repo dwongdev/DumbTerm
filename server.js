@@ -9,6 +9,25 @@ const cookieParser = require('cookie-parser');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Base URL configuration
+const BASE_PATH = (() => {
+    if (!process.env.BASE_URL) {
+        console.log('No BASE_URL set, using empty base path');
+        return '';
+    }
+    try {
+        const url = new URL(process.env.BASE_URL);
+        const path = url.pathname.replace(/\/$/, ''); // Remove trailing slash
+        console.log('Extracted base path:', path);
+        return path;
+    } catch {
+        // If BASE_URL is just a path (e.g. /app)
+        const path = process.env.BASE_URL.replace(/\/$/, '');
+        console.log('Using BASE_URL as path:', path);
+        return path;
+    }
+})();
+
 // Get the project name from package.json to use for the PIN environment variable
 const projectName = require('./package.json').name.toUpperCase().replace(/-/g, '_');
 const PIN = process.env[`${projectName}_PIN`];
@@ -107,28 +126,38 @@ const authMiddleware = (req, res, next) => {
     next();
 };
 
+// Serve config.js for frontend
+app.get(BASE_PATH + '/config.js', (req, res) => {
+    res.type('application/javascript').send(`
+        window.appConfig = {
+            basePath: '${BASE_PATH}',
+            debug: ${process.env.NODE_ENV !== 'production'}
+        };
+    `);
+});
+
 // Serve static files for public assets
-app.use('/styles.css', express.static('public/styles.css'));
-app.use('/script.js', express.static('public/script.js'));
+app.use(BASE_PATH + '/styles.css', express.static('public/styles.css'));
+app.use(BASE_PATH + '/script.js', express.static('public/script.js'));
 
 // Routes
-app.get('/', authMiddleware, (req, res) => {
+app.get(BASE_PATH + '/', authMiddleware, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.get('/login', (req, res) => {
+app.get(BASE_PATH + '/login', (req, res) => {
     // If no PIN is set, redirect to index
     if (!PIN || PIN.trim() === '') {
-        return res.redirect('/');
+        return res.redirect(BASE_PATH + '/');
     }
 
     if (req.session.authenticated) {
-        return res.redirect('/');
+        return res.redirect(BASE_PATH + '/');
     }
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-app.get('/pin-length', (req, res) => {
+app.get(BASE_PATH + '/pin-length', (req, res) => {
     // If no PIN is set, return 0 length
     if (!PIN || PIN.trim() === '') {
         return res.json({ length: 0 });
@@ -136,7 +165,7 @@ app.get('/pin-length', (req, res) => {
     res.json({ length: PIN.length });
 });
 
-app.post('/verify-pin', (req, res) => {
+app.post(BASE_PATH + '/verify-pin', (req, res) => {
     // If no PIN is set, authentication is successful
     if (!PIN || PIN.trim() === '') {
         req.session.authenticated = true;

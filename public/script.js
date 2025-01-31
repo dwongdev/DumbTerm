@@ -1,3 +1,14 @@
+// Helper function to join paths with base path
+function joinPath(path) {
+    const basePath = window.appConfig?.basePath || '';
+    // Remove any leading slash from path and trailing slash from basePath
+    const cleanPath = path.replace(/^\/+/, '');
+    const cleanBase = basePath.replace(/\/+$/, '');
+    
+    // Join with single slash
+    return cleanBase ? `${cleanBase}/${cleanPath}` : cleanPath;
+}
+
 // Theme toggle functionality
 function initThemeToggle() {
     const themeToggle = document.getElementById('themeToggle');
@@ -25,7 +36,7 @@ function setupPinInputs() {
     if (!form) return; // Only run on login page
 
     // Fetch PIN length from server
-    fetch('/pin-length')
+    fetch(joinPath('pin-length'))
         .then(response => response.json())
         .then(data => {
             const pinLength = data.length;
@@ -34,7 +45,7 @@ function setupPinInputs() {
             // Create PIN input fields
             for (let i = 0; i < pinLength; i++) {
                 const input = document.createElement('input');
-                input.type = 'text';
+                input.type = 'password';
                 input.maxLength = 1;
                 input.className = 'pin-input';
                 input.setAttribute('inputmode', 'numeric');
@@ -106,7 +117,7 @@ function setupPinInputs() {
 function submitPin(pin, inputs) {
     const errorElement = document.querySelector('.pin-error');
     
-    fetch('/verify-pin', {
+    fetch(joinPath('verify-pin'), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -117,7 +128,7 @@ function submitPin(pin, inputs) {
         const data = await response.json();
         
         if (response.ok) {
-            window.location.href = '/';
+            window.location.href = joinPath('');
         } else if (response.status === 429) {
             // Handle lockout
             errorElement.textContent = data.error;
