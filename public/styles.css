@@ -55,9 +55,9 @@ main {
     box-shadow: var(--shadow);
     width: calc(100% - 2rem);
     max-width: 800px;
-    min-height: calc(100vh - 2rem);
+    min-height: calc(100vh - 4rem);
     transition: background var(--transition), box-shadow var(--transition);
-    margin: 0 auto;
+    margin: 1rem auto;
 }
 
 /* Form styling */
@@ -71,7 +71,7 @@ form {
     max-width: 400px;
     transition: background var(--transition), box-shadow var(--transition);
     text-align: center;
-    margin: 0 auto;
+    margin: 1rem auto;
     transform: translateY(-10%);
 }
 
@@ -202,11 +202,37 @@ h2 {
     transform: translateY(0);
 }
 
+/* Credit styling */
+.dumbware-credit {
+    position: fixed;
+    bottom: 4px;
+    width: 100%;
+    text-align: center;
+    font-size: 0.75em;
+    opacity: 0.5;
+    padding: 8px;
+    z-index: 100;
+    pointer-events: none;
+    margin: 0;
+}
+
+.dumbware-credit a {
+    color: inherit;
+    text-decoration: none;
+    pointer-events: auto;
+}
+
+.dumbware-credit a:hover {
+    text-decoration: underline;
+    opacity: 0.8;
+}
+
 /* Responsive adjustments */
 @media (max-width: 400px) {
     form, .container {
         padding: 3rem 0.75rem 1.5rem;
         width: calc(100% - 1rem);
+        margin: 0.5rem auto;
     }
 
     .pin-input-container {
