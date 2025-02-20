@@ -152,7 +152,8 @@ app.get(BASE_PATH + '/config.js', (req, res) => {
     res.type('application/javascript').send(`
         window.appConfig = {
             basePath: '${BASE_PATH}',
-            debug: ${DEBUG}
+            debug: ${DEBUG},
+            siteTitle: '${process.env.SITE_TITLE || 'DumbTitle'}'
         };
     `);
 });

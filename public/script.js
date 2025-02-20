@@ -162,6 +162,11 @@ function submitPin(pin, inputs) {
 
 // Initialize functionality
 document.addEventListener('DOMContentLoaded', () => {
+    // Set site title
+    const siteTitle = window.appConfig?.siteTitle || 'DumbTitle';
+    document.getElementById('pageTitle').textContent = siteTitle;
+    document.getElementById('siteTitle').textContent = siteTitle;
+    
     initThemeToggle();
     setupPinInputs();
 }); 
