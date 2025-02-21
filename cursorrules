@@ -113,6 +113,7 @@
 - Maximum line length: 100 characters
 - Use modern JavaScript features appropriately
 - Prefer clarity over cleverness
+- Add logging when appropriate and environment variable DEBUG is set to true
 
 # Code Organization and Modularity
 - Break complex functionality into separate modules
