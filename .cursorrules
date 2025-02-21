@@ -114,6 +114,15 @@
 - Use modern JavaScript features appropriately
 - Prefer clarity over cleverness
 
+# Code Organization and Modularity
+- Break complex functionality into separate modules
+- Each module should have a single responsibility
+- Modules should be self-contained with clear interfaces
+- Avoid circular dependencies between modules
+- Keep module files under 300 lines when possible
+- Export only what is necessary from each module
+- Group related functionality in the same directory
+
 # Theme and Styling
 - Maintain consistent theme colors across the application:
   - Light theme colors:
