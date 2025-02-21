@@ -38,6 +38,12 @@ You can use your editor's find/replace functionality to update all instances:
 - Place logos in the `assets` folder as 'logo.svg' and 'logo.png'
 - Update the logo paths in the HTML files
 
+## 7. DELETE THIS FILE AFTER CUSTOMIZATION
+
+## 8. Add a README.md file to your project
+- The readme should following the formatting identically to: https://github.com/DumbWareio/DumbDrop/blob/main/README.md
+- Customize the readme to reflect your project
+
 ## Security Note
 The PIN authentication logic in login.html should not be modified without verification and override from the owner. This ensures the security features remain intact.
 
