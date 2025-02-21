@@ -130,10 +130,6 @@ dist
 .pnp.*
 
 # Cursor IDE
-cursorrules
 .cursor
 .cursor/
 
-# Dumb Boilerplate Documentation
-boilerplate.md
-reference.md
