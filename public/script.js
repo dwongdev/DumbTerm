@@ -173,14 +173,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const registerServiceWorker = () => {
         // Register PWA Service Worker
         if ("serviceWorker" in navigator) {
-           navigator.serviceWorker.register("/service-worker.js")
-               .then((reg) => console.log("Service Worker registered:", reg.scope))
-               .catch((err) => console.log("Service Worker registration failed:", err));
-       }
-   }
+            navigator.serviceWorker.register(joinPath('service-worker.js'))
+                .then((reg) => console.log("Service Worker registered:", reg.scope))
+                .catch((err) => console.log("Service Worker registration failed:", err));
+        }
+    }
 
-   async function initialize() {
-    registerServiceWorker();
-   };
+    async function initialize() {
+        registerServiceWorker();
+    };
     initialize();
-}); 
+});

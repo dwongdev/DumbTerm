@@ -171,12 +171,16 @@ app.get(BASE_PATH + '/config.js', (req, res) => {
 // Serve static files for public assets
 app.use(BASE_PATH + '/styles.css', express.static('public/styles.css'));
 app.use(BASE_PATH + '/script.js', express.static('public/script.js'));
-app.get("/asset-manifest.json", (req, res) => {
-    // generated in pwa-manifest-generator and fetched from service-worker.js
-    res.sendFile(path.join(ASSETS_DIR, "asset-manifest.json"));
-});
-app.get("/manifest.json", (req, res) => {
+app.use(BASE_PATH + '/service-worker.js', express.static('public/service-worker.js'));
+app.use(BASE_PATH + '/assets', express.static(path.join(PUBLIC_DIR, 'assets'))); // Add assets directory serving
+app.use(BASE_PATH + '/node_modules', express.static('public/node_modules'));
+
+app.get(BASE_PATH + "/manifest.json", (req, res) => {
     res.sendFile(path.join(ASSETS_DIR, "manifest.json"));
+});
+
+app.get(BASE_PATH + "/asset-manifest.json", (req, res) => {
+    res.sendFile(path.join(ASSETS_DIR, "asset-manifest.json"));
 });
 
 // Routes
@@ -288,4 +292,4 @@ app.listen(PORT, () => {
         debug: DEBUG
     });
     console.log(`Server running on port ${PORT}`);
-}); 
+});

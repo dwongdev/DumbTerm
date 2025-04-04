@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const PUBLIC_DIR = path.join(__dirname, "..", "public");
 const ASSETS_DIR = path.join(PUBLIC_DIR, "assets");
+const BASE_PATH = process.env.BASE_URL ? new URL(process.env.BASE_URL).pathname.replace(/\/$/, '') : '';
 
 function getFiles(dir, basePath = "/") {
   let fileList = [];
@@ -35,25 +36,26 @@ function generatePWAManifest(siteTitle) {
 
   const pwaManifest = {
     name: siteTitle,
-      short_name: siteTitle,
-      description: "A stupidly simple web-based terminal emulator",
-      start_url: "/",
-      display: "standalone",
-      background_color: "#ffffff",
-      theme_color: "#000000",
-      icons: [
-        {
-          src: "dumbpad.png",
-          type: "image/png",
-          sizes: "192x192"
-        },
-        {
-          src: "dumbpad.png",
-          type: "image/png",
-          sizes: "512x512"
-        }
-      ],
-      orientation: "any"
+    short_name: siteTitle,
+    description: "A stupidly simple web-based terminal emulator",
+    start_url: BASE_PATH || "/",
+    scope: BASE_PATH || "/",
+    display: "standalone",
+    background_color: "#ffffff",
+    theme_color: "#000000",
+    icons: [
+      {
+        src: `${BASE_PATH}/assets/dumbterm.png`,
+        type: "image/png",
+        sizes: "192x192"
+      },
+      {
+        src: `${BASE_PATH}/assets/dumbterm.png`,
+        type: "image/png",
+        sizes: "512x512"
+      }
+    ],
+    orientation: "any"
   };
 
   fs.writeFileSync(path.join(ASSETS_DIR, "manifest.json"), JSON.stringify(pwaManifest, null, 2));
