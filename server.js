@@ -5,10 +5,19 @@ const helmet = require('helmet');
 const crypto = require('crypto');
 const path = require('path');
 const cookieParser = require('cookie-parser');
+const cors = require('cors');
+const { generatePWAManifest } = require("./scripts/pwa-manifest-generator")
+const { originValidationMiddleware, getCorsOptions, validateOrigin } = require('./scripts/cors');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const DEBUG = process.env.DEBUG === 'TRUE';
+const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
+const SITE_TITLE = process.env.SITE_TITLE || 'DumbTerm';
+const PUBLIC_DIR = path.join(__dirname, 'public');
+const ASSETS_DIR = path.join(PUBLIC_DIR, 'assets');
+
+generatePWAManifest(SITE_TITLE);
 
 function debugLog(...args) {
     if (DEBUG) {
@@ -85,17 +94,18 @@ function recordAttempt(ip) {
 }
 
 // Security middleware
-app.use(helmet({
-    contentSecurityPolicy: {
-        directives: {
-            defaultSrc: ["'self'"],
-            scriptSrc: ["'self'"],
-            styleSrc: ["'self'", "'unsafe-inline'"],
-            imgSrc: ["'self'"],
-        },
-    },
-}));
-
+app.set('trust proxy', 1);
+app.use(cors(getCorsOptions(BASE_URL)));
+// app.use(helmet({
+//     contentSecurityPolicy: {
+//         directives: {
+//             defaultSrc: ["'self'"],
+//             scriptSrc: ["'self'"],
+//             styleSrc: ["'self'", "'unsafe-inline'"],
+//             imgSrc: ["'self'"],
+//         },
+//     },
+// }));
 app.use(express.json());
 app.use(cookieParser());
 
@@ -161,9 +171,16 @@ app.get(BASE_PATH + '/config.js', (req, res) => {
 // Serve static files for public assets
 app.use(BASE_PATH + '/styles.css', express.static('public/styles.css'));
 app.use(BASE_PATH + '/script.js', express.static('public/script.js'));
+app.get("/asset-manifest.json", (req, res) => {
+    // generated in pwa-manifest-generator and fetched from service-worker.js
+    res.sendFile(path.join(ASSETS_DIR, "asset-manifest.json"));
+});
+app.get("/manifest.json", (req, res) => {
+    res.sendFile(path.join(ASSETS_DIR, "manifest.json"));
+});
 
 // Routes
-app.get(BASE_PATH + '/', authMiddleware, (req, res) => {
+app.get(BASE_PATH + '/', [originValidationMiddleware, authMiddleware], (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 

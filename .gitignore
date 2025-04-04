@@ -133,3 +133,10 @@ dist
 .cursor
 .cursor/
 
+# OS files
+.DS_Store
+Thumbs.db
+
+# Generated PWA Files
+/public/*manifest.json
+/public/assets/*manifest.json
