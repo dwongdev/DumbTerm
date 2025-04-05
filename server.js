@@ -6,12 +6,20 @@ const crypto = require('crypto');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
-const { generatePWAManifest } = require("./scripts/pwa-manifest-generator")
+const { WebSocketServer } = require('ws');
+const http = require('http');
+const pty = require('node-pty');
+const os = require('os');
+const { generatePWAManifest } = require("./scripts/pwa-manifest-generator");
 const { originValidationMiddleware, getCorsOptions, validateOrigin } = require('./scripts/cors');
 
 const app = express();
+const server = http.createServer(app);
+const wss = new WebSocketServer({ server });
+
 const PORT = process.env.PORT || 3000;
 const DEBUG = process.env.DEBUG === 'TRUE';
+const NODE_ENV = process.env.NODE_ENV || 'production';
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 const SITE_TITLE = process.env.SITE_TITLE || 'DumbTerm';
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -273,6 +281,93 @@ app.post(BASE_PATH + '/verify-pin', (req, res) => {
     }, delay);
 });
 
+// WebSocket connection handling
+wss.on('connection', (ws, req) => {
+    if (!req.headers.cookie) {
+        ws.close();
+        return;
+    }
+
+    // Parse the cookies
+    const parsedCookies = {};
+    req.headers.cookie.split(';').forEach(cookie => {
+        const parts = cookie.split('=');
+        parsedCookies[parts[0].trim()] = parts[1].trim();
+    });
+
+    // If no PIN is set, allow the connection
+    if (!PIN || PIN.trim() === '') {
+        createTerminal(ws);
+        return;
+    }
+
+    // Check if the user has the correct PIN cookie
+    const pinCookie = parsedCookies[`${projectName}_PIN`];
+    if (!pinCookie || !verifyPin(PIN, pinCookie)) {
+        ws.close();
+        return;
+    }
+
+    createTerminal(ws);
+});
+
+// Terminal creation helper function
+function createTerminal(ws) {
+    // Create terminal process
+    const shell = process.env.SHELL || (os.platform() === 'win32' ? 'powershell.exe' : 'bash');
+    const term = pty.spawn(shell, [], {
+        name: 'xterm-color',
+        cols: 80,
+        rows: 24,
+        cwd: process.env.HOME || '/root',
+        env: process.env
+    });
+
+    debugLog('Terminal created with PID:', term.pid);
+
+    // Handle incoming data from client
+    ws.on('message', (data) => {
+        try {
+            const message = JSON.parse(data);
+            switch(message.type) {
+                case 'input':
+                    term.write(message.data);
+                    break;
+                case 'resize':
+                    term.resize(message.cols, message.rows);
+                    break;
+            }
+        } catch (error) {
+            debugLog('Error processing WebSocket message:', error);
+        }
+    });
+
+    // Handle terminal data
+    term.on('data', (data) => {
+        if (ws.readyState === ws.OPEN) {
+            try {
+                ws.send(JSON.stringify({ type: 'output', data }));
+            } catch (error) {
+                debugLog('Error sending terminal output:', error);
+            }
+        }
+    });
+
+    // Clean up on close
+    ws.on('close', () => {
+        debugLog('WebSocket closed, killing terminal process:', term.pid);
+        term.kill();
+    });
+
+    // Handle terminal exit
+    term.on('exit', (code) => {
+        debugLog('Terminal process exited with code:', code);
+        if (ws.readyState === ws.OPEN) {
+            ws.close();
+        }
+    });
+}
+
 // Cleanup old lockouts periodically
 setInterval(() => {
     const now = Date.now();
@@ -283,7 +378,8 @@ setInterval(() => {
     }
 }, 60000); // Clean up every minute
 
-app.listen(PORT, () => {
+// Update server.listen to use the http server
+server.listen(PORT, () => {
     debugLog('Server Configuration:', {
         port: PORT,
         basePath: BASE_PATH,
