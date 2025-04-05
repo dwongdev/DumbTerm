@@ -297,6 +297,61 @@ h2 {
     opacity: 0.8;
 }
 
+/* Terminal search styling */
+.terminal-search-container {
+    position: absolute;
+    top: 1rem;
+    right: 4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--container);
+    padding: 0.5rem;
+    border-radius: 6px;
+    box-shadow: var(--shadow);
+    z-index: 1000;
+}
+
+.terminal-search-container input {
+    background: var(--terminal-bg);
+    color: var(--terminal-text);
+    border: 1px solid var(--terminal-border);
+    border-radius: 4px;
+    padding: 0.25rem 0.5rem;
+    font-family: inherit;
+    font-size: 14px;
+    width: 200px;
+}
+
+.terminal-search-container input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.search-buttons {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.search-buttons button {
+    background: var(--terminal-bg);
+    color: var(--terminal-text);
+    border: 1px solid var(--terminal-border);
+    border-radius: 4px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 0;
+}
+
+.search-buttons button:hover {
+    background: var(--terminal-border);
+}
+
 /* Responsive adjustments */
 @media (max-width: 400px) {
     form, .container {

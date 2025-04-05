@@ -200,7 +200,6 @@ function initTerminal() {
         windowOptions: {
             setWinSize: true
         },
-        // Make terminal text slightly brighter for better readability
         allowProposedApi: true,
         rightClickSelectsWord: true
     });
@@ -209,20 +208,134 @@ function initTerminal() {
     const fitAddon = new FitAddon.FitAddon();
     const webLinksAddon = new WebLinksAddon.WebLinksAddon();
     const webglAddon = new WebglAddon.WebglAddon();
+    const canvasAddon = new CanvasAddon.CanvasAddon();
+    const imageAddon = new ImageAddon.ImageAddon();
+    const ligaturesAddon = new LigaturesAddon.LigaturesAddon();
+    const searchAddon = new SearchAddon.SearchAddon();
+    const serializeAddon = new SerializeAddon.SerializeAddon();
+    const unicode11Addon = new Unicode11Addon.Unicode11Addon();
 
+    // Open terminal in the container first
+    terminal.open(document.getElementById('terminal'));
+
+    // Load all addons
     terminal.loadAddon(fitAddon);
     terminal.loadAddon(webLinksAddon);
-    
-    // Try to load WebGL, fallback gracefully if it fails
+    terminal.loadAddon(searchAddon);
+    terminal.loadAddon(serializeAddon);
+    terminal.loadAddon(unicode11Addon);
+
+    // Try to load WebGL first, fallback to Canvas if it fails
     try {
         terminal.loadAddon(webglAddon);
+        webglAddon.onContextLoss(e => {
+            console.warn('WebGL context lost, falling back to canvas renderer');
+            terminal.loadAddon(canvasAddon);
+        });
     } catch (e) {
-        console.warn('WebGL addon could not be loaded:', e);
+        console.warn('WebGL addon could not be loaded, using canvas renderer:', e);
+        terminal.loadAddon(canvasAddon);
     }
 
-    // Open terminal in the container
-    terminal.open(document.getElementById('terminal'));
+    // Load remaining addons
+    terminal.loadAddon(imageAddon);
+    try {
+        terminal.loadAddon(ligaturesAddon);
+    } catch (e) {
+        console.warn('Ligatures addon could not be loaded:', e);
+    }
+
     fitAddon.fit();
+
+    // Add search functionality with Ctrl+Alt+F or Cmd+Alt+F
+    document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+            e.preventDefault();
+            
+            let searchBox = document.getElementById('terminal-search');
+            if (!searchBox) {
+                const searchContainer = document.createElement('div');
+                searchContainer.className = 'terminal-search-container';
+                searchContainer.innerHTML = `
+                    <input type="text" id="terminal-search" placeholder="Search...">
+                    <div class="search-buttons">
+                        <button id="search-prev">↑</button>
+                        <button id="search-next">↓</button>
+                        <button id="search-close">×</button>
+                    </div>
+                `;
+                document.querySelector('.container').appendChild(searchContainer);
+                
+                const input = searchContainer.querySelector('#terminal-search');
+                const prevBtn = searchContainer.querySelector('#search-prev');
+                const nextBtn = searchContainer.querySelector('#search-next');
+                const closeBtn = searchContainer.querySelector('#search-close');
+                
+                let searchTimeout;
+                input.addEventListener('input', () => {
+                    const searchTerm = input.value;
+                    // Debounce search to avoid performance issues
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => {
+                        if (searchTerm) {
+                            try {
+                                searchAddon.findNext(searchTerm);
+                            } catch (e) {
+                                console.warn('Search failed:', e);
+                            }
+                        }
+                    }, 200);
+                });
+                
+                prevBtn.addEventListener('click', () => {
+                    try {
+                        searchAddon.findPrevious(input.value);
+                    } catch (e) {
+                        console.warn('Search failed:', e);
+                    }
+                });
+                
+                nextBtn.addEventListener('click', () => {
+                    try {
+                        searchAddon.findNext(input.value);
+                    } catch (e) {
+                        console.warn('Search failed:', e);
+                    }
+                });
+                
+                closeBtn.addEventListener('click', () => {
+                    searchContainer.remove();
+                    terminal.focus();
+                });
+                
+                input.addEventListener('keydown', (e) => {
+                    switch(e.key) {
+                        case 'Enter':
+                            e.preventDefault();
+                            try {
+                                if (e.shiftKey) {
+                                    searchAddon.findPrevious(input.value);
+                                } else {
+                                    searchAddon.findNext(input.value);
+                                }
+                            } catch (e) {
+                                console.warn('Search failed:', e);
+                            }
+                            break;
+                        case 'Escape':
+                            searchContainer.remove();
+                            terminal.focus();
+                            e.preventDefault();
+                            break;
+                    }
+                });
+                
+                input.focus();
+            } else {
+                searchBox.focus();
+            }
+        }
+    });
 
     // WebSocket connection management
     let ws = null;
