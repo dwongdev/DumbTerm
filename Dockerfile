@@ -1,6 +1,6 @@
 FROM node:20-bullseye
 
-# Install additional terminal utilities
+# Install additional terminal utilities and prerequisites for Starship
 RUN apt-get update && apt-get install -y \
     curl \
     wget \
@@ -12,7 +12,12 @@ RUN apt-get update && apt-get install -y \
     net-tools \
     iputils-ping \
     telnet \
+    fontconfig \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
+
+# Install Starship
+RUN curl -sS https://starship.rs/install.sh | sh -s -- --yes
 
 WORKDIR /app
 
@@ -21,6 +26,10 @@ COPY package*.json ./
 
 # Install dependencies
 RUN npm ci
+
+# Copy entrypoint script first and set permissions
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 # Copy application files
 COPY . .
@@ -38,4 +47,5 @@ ENV SHELL=/bin/bash
 EXPOSE 3000
 
 # Start the application
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["npm", "start"]
