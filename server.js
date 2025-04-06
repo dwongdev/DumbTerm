@@ -15,7 +15,55 @@ const { originValidationMiddleware, getCorsOptions, validateOrigin } = require('
 
 const app = express();
 const server = http.createServer(app);
-const wss = new WebSocketServer({ server });
+
+// WebSocket server configuration
+const wss = new WebSocketServer({ 
+    server,
+    verifyClient: (info, cb) => {
+        debugLog('Verifying WebSocket connection from:', info.req.headers.origin);
+        
+        // If no PIN is set, allow the connection immediately
+        if (!PIN || PIN.trim() === '') {
+            debugLog('No PIN required, allowing WebSocket connection');
+            return cb(true);
+        }
+
+        // Parse cookies from the upgrade request
+        const cookieHeader = info.req.headers.cookie;
+        debugLog('Cookie header:', cookieHeader || 'No cookie header present');
+        
+        if (!cookieHeader) {
+            debugLog('No cookies in request, closing connection');
+            return cb(false, 401, 'No cookies found');
+        }
+
+        // Parse cookies
+        const cookies = {};
+        cookieHeader.split(';').forEach(cookie => {
+            const parts = cookie.split('=');
+            cookies[parts[0].trim()] = parts[1].trim();
+        });
+        debugLog('Parsed cookies:', cookies);
+
+        // Verify the PIN cookie
+        const pinCookieName = `${projectName}_PIN`;
+        const pinCookie = cookies[pinCookieName];
+        debugLog(`Looking for cookie: ${pinCookieName}`);
+        
+        if (pinCookie) {
+            const isValidPin = verifyPin(PIN, pinCookie);
+            debugLog('PIN cookie verification:', isValidPin ? 'success' : 'failed');
+            if (isValidPin) {
+                return cb(true);
+            }
+        } else {
+            debugLog(`${pinCookieName} cookie not found`);
+        }
+
+        debugLog('Authentication failed, rejecting WebSocket connection');
+        return cb(false, 401, 'Unauthorized');
+    }
+});
 
 const PORT = process.env.PORT || 3000;
 const DEBUG = process.env.DEBUG === 'TRUE';
@@ -149,9 +197,10 @@ function verifyPin(storedPin, providedPin) {
 const authMiddleware = (req, res, next) => {
     debugLog('Auth check for path:', req.path, 'Method:', req.method);
     
-    // If no PIN is set, bypass authentication
+    // If no PIN is set or PIN is empty, bypass authentication completely
     if (!PIN || PIN.trim() === '') {
         debugLog('Auth bypassed - No PIN configured');
+        req.session.authenticated = true; // Set session as authenticated
         return next();
     }
 
@@ -171,7 +220,7 @@ app.get(BASE_PATH + '/config.js', (req, res) => {
         window.appConfig = {
             basePath: '${BASE_PATH}',
             debug: ${DEBUG},
-            siteTitle: '${process.env.SITE_TITLE || 'DumbTitle'}'
+            siteTitle: '${process.env.SITE_TITLE || 'DumbTerm'}'
         };
     `);
 });
@@ -283,7 +332,25 @@ app.post(BASE_PATH + '/verify-pin', (req, res) => {
 
 // WebSocket connection handling
 wss.on('connection', (ws, req) => {
+    debugLog('New WebSocket connection attempt');
+    
+    // Keep track of connection status
+    ws.isAlive = true;
+    
+    // Setup ping/pong heartbeat
+    ws.on('pong', () => {
+        ws.isAlive = true;
+        debugLog('Received pong from client');
+    });
+
+    // Handle connection errors
+    ws.on('error', (error) => {
+        debugLog('WebSocket error:', error);
+        ws.terminate();
+    });
+
     if (!req.headers.cookie) {
+        debugLog('No cookies found, closing connection');
         ws.close();
         return;
     }
@@ -297,6 +364,7 @@ wss.on('connection', (ws, req) => {
 
     // If no PIN is set, allow the connection
     if (!PIN || PIN.trim() === '') {
+        debugLog('No PIN required, creating terminal');
         createTerminal(ws);
         return;
     }
@@ -304,11 +372,36 @@ wss.on('connection', (ws, req) => {
     // Check if the user has the correct PIN cookie
     const pinCookie = parsedCookies[`${projectName}_PIN`];
     if (!pinCookie || !verifyPin(PIN, pinCookie)) {
+        debugLog('Invalid PIN cookie, closing connection');
         ws.close();
         return;
     }
 
+    debugLog('Authentication successful, creating terminal');
     createTerminal(ws);
+});
+
+// Heartbeat check interval with more frequent checks
+const heartbeatInterval = setInterval(() => {
+    wss.clients.forEach((ws) => {
+        if (ws.isAlive === false) {
+            debugLog('Terminating inactive WebSocket connection');
+            return ws.terminate();
+        }
+        ws.isAlive = false;
+        try {
+            ws.ping();
+        } catch (err) {
+            debugLog('Error sending ping:', err);
+            ws.terminate();
+        }
+    });
+}, 15000); // Check every 15 seconds instead of 30
+
+// Clean up interval on server shutdown
+process.on('SIGTERM', () => {
+    clearInterval(heartbeatInterval);
+    wss.close();
 });
 
 // Terminal creation helper function
@@ -316,11 +409,17 @@ function createTerminal(ws) {
     // Create terminal process
     const shell = process.env.SHELL || (os.platform() === 'win32' ? 'powershell.exe' : 'bash');
     const term = pty.spawn(shell, [], {
-        name: 'xterm-color',
+        name: 'xterm-256color',
         cols: 80,
         rows: 24,
         cwd: process.env.HOME || '/root',
-        env: process.env
+        env: {
+            ...process.env,
+            TERM: 'xterm-256color',
+            COLORTERM: 'truecolor',
+            LANG: 'en_US.UTF-8',
+            LC_ALL: 'en_US.UTF-8'
+        }
     });
 
     debugLog('Terminal created with PID:', term.pid);

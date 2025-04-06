@@ -42,8 +42,9 @@ sed -i '/eval "$(starship init bash)"/d' /root/.bashrc
 
 # Handle Starship and Nerd Fonts based on ENABLE_STARSHIP env var
 if [ "$ENABLE_STARSHIP" = "true" ]; then
+    # Still looking into getting nerdfonts to render correctly so far now we're using the no nerdfonts preset
     # Install Nerd Fonts
-    install_nerdfonts
+    # install_nerdfonts
 
     # Create config directory and copy starship config if it exists
     mkdir -p /root/.config

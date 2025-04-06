@@ -1,7 +1,8 @@
 FROM node:20-bullseye
 
-# Install additional terminal utilities and prerequisites for Starship
+# Install additional terminal utilities and prerequisites
 RUN apt-get update && apt-get install -y \
+    apt-utils \
     curl \
     wget \
     ssh \
@@ -14,7 +15,18 @@ RUN apt-get update && apt-get install -y \
     telnet \
     fontconfig \
     unzip \
+    locales \
     && rm -rf /var/lib/apt/lists/*
+
+# Configure locales
+RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && \
+    locale-gen en_US.UTF-8 && \
+    update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
+
+# Set environment variables for locale
+ENV LANG=en_US.UTF-8 \
+    LANGUAGE=en_US:en \
+    LC_ALL=en_US.UTF-8
 
 # Install Starship
 RUN curl -sS https://starship.rs/install.sh | sh -s -- --yes

@@ -9,13 +9,15 @@ services:
     volumes:
       - ${DUMBTERM_CONFIG:-./config/starship.toml}:/root/.config/starship.toml
     environment:
+      # Container timezone
+      TZ: ${DUMBTERM_TZ:-America/Los_Angeles}
       # The title shown in the web interface
-      SITE_TITLE: ${DUMBTERM_SITE_TITLE:-My Terminal}
+      SITE_TITLE: ${DUMBTERM_SITE_TITLE:-DumbTerm}
       # Optional PIN protection (leave empty to disable)
       DUMBTERM_PIN: ${DUMBTERM_PIN:-}
       # The base URL for the application
       BASE_URL: ${DUMBTERM_BASE_URL:-http://localhost:3000} # Use ALLOWED_ORIGINS below to restrict cors to specific origins
-      ENABLE_STARSHIP: ${ENABLE_STARSHIP:-false}
+      ENABLE_STARSHIP: ${ENABLE_STARSHIP:-true}
       # (OPTIONAL)
       # Usage: Comma-separated list of urls: http://localhost:port,http://internalip:port,https://base.proxy.tld,https://authprovider.domain.tld
       # ALLOWED_ORIGINS: ${DUMBTERM_ALLOWED_ORIGINS:-http://localhost:3000} # Comment out to allow all origins (*)

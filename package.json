@@ -6,10 +6,9 @@
   "scripts": {
     "start": "npm run copy-xterm && node server.js",
     "dev": "npm run copy-xterm && nodemon server.js",
-    "copy-xterm": "mkdir -p public/node_modules/@xterm public/node_modules/@fontsource && cp -r node_modules/@xterm/xterm node_modules/@xterm/addon-* public/node_modules/@xterm/ && cp -r node_modules/@fontsource/jetbrains-mono public/node_modules/@fontsource/"
+    "copy-xterm": "mkdir -p public/node_modules/@xterm && cp -r node_modules/@xterm/xterm node_modules/@xterm/addon-* public/node_modules/@xterm/"
   },
   "dependencies": {
-    "@fontsource/jetbrains-mono": "^5.2.5",
     "@xterm/addon-attach": "^0.11.0",
     "@xterm/addon-canvas": "^0.7.0",
     "@xterm/addon-clipboard": "^0.1.0",

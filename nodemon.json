@@ -1,3 +1,10 @@
 {
-  "ignore": ["asset-manifest.json", "manifest.json"]
+  "ignore": [
+    "public/*",
+    "node_modules/*",
+    ".git",
+    "*.log"
+  ],
+  "delay": 1000,
+  "watch": ["server.js", "config/*", "scripts/*"]
 }

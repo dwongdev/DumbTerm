@@ -104,11 +104,16 @@ main {
 .xterm {
     height: 100%;
     padding: 0.5rem;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: Menlo, Monaco, 'Courier New', monospace !important;
+    font-feature-settings: "liga" 1, "calt" 1; /* Enable ligatures */
+    padding-right: 15px; /* Match scrollbar width */
+    padding-bottom: 5px;
 }
 
 .xterm-viewport {
     overflow-y: auto !important;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 .xterm-viewport::-webkit-scrollbar {
@@ -353,7 +358,24 @@ h2 {
 }
 
 /* Responsive adjustments */
-@media (max-width: 400px) {
+@media (max-width: 1000px) {
+    .container {
+        width: calc(100%);
+        max-width: 100%;
+        /* padding: 1.5rem 0.75rem 1rem;
+        margin: 0.5rem auto; */
+    }
+
+    #terminal {
+        padding: 0.5rem;
+        min-height: 250px;
+        height: calc(100vh - 6rem);
+        max-height: calc(100vh - 6rem);
+        margin-top: 0.5rem;
+    }
+}
+
+@media (max-width: 450px) {
     form, .container {
         padding: 3rem 0.75rem 1.5rem;
         width: calc(100% - 1rem);
@@ -375,43 +397,18 @@ h2 {
     h1 {
         font-size: 1.75rem;
     }
-}
-
-@media (max-width: 320px) {
-    .pin-input-container input.pin-input {
-        width: 32px;
-        height: 32px;
-    }
-}
-
-@media (max-width: 768px) {
-    .container {
-        width: calc(100% - 1rem);
-        max-width: 100%;
-        padding: 1.5rem 0.75rem 1rem;
-        margin: 0.5rem auto;
-    }
-
-    #terminal {
-        padding: 0.5rem;
-        min-height: 250px;
-        height: calc(100vh - 6rem);
-        max-height: calc(100vh - 6rem);
-        margin-top: 0.5rem;
-    }
-}
-
-@media (max-width: 400px) {
-    .container {
-        width: calc(100% - 0.5rem);
-        padding: 1rem 0.5rem 0.75rem;
-        margin: 0.25rem auto;
-    }
 
     #terminal {
         padding: 0.25rem;
         min-height: 200px;
         height: calc(100vh - 4rem);
         max-height: calc(100vh - 4rem);
+    }
+}
+
+@media (max-width: 320px) {
+    .pin-input-container input.pin-input {
+        width: 32px;
+        height: 32px;
     }
 }

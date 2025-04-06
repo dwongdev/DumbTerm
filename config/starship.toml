@@ -1,31 +1,18 @@
-# Get editor completions based on the config schema
-"$schema" = 'https://starship.rs/config-schema.json'
+[battery]
+full_symbol = "• "
+charging_symbol = "⇡ "
+discharging_symbol = "⇣ "
+unknown_symbol = "❓ "
+empty_symbol = "❗ "
 
-# Add a blank line between shell prompts
-add_newline = true
+[erlang]
+symbol = "ⓔ "
 
-# Replace the "❯" symbol in the prompt with "➜"
-[character]
-success_symbol = "[➜](bold green)"
-error_symbol = "[➜](bold red)"
+[nodejs]
+symbol = "[⬢](bold green) "
 
-# Show current directory
-[directory]
-truncation_length = 8
-truncate_to_repo = true
+[pulumi]
+symbol = "🧊 "
 
-# Git configuration
-[git_branch]
-symbol = " "
-truncation_length = 20
-truncation_symbol = ""
-
-[git_status]
-ahead = "⇡${count}"
-diverged = "⇕⇡${ahead_count}⇣${behind_count}"
-behind = "⇣${count}"
-
-# Show execution time
-[cmd_duration]
-min_time = 500
-format = "took [$duration](bold yellow)"
+[typst]
+symbol = "t "

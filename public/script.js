@@ -165,7 +165,7 @@ function initTerminal() {
     const terminal = new Terminal({
         cursorBlink: true,
         fontSize: 15,
-        fontFamily: 'JetBrains Mono, Menlo, Monaco, "Courier New", monospace',
+        fontFamily: 'Menlo, Monaco, "Courier New", monospace',
         theme: {
             background: getComputedStyle(document.documentElement).getPropertyValue('--terminal-bg').trim(),
             foreground: getComputedStyle(document.documentElement).getPropertyValue('--terminal-text').trim(),
@@ -201,7 +201,9 @@ function initTerminal() {
             setWinSize: true
         },
         allowProposedApi: true,
-        rightClickSelectsWord: true
+        rightClickSelectsWord: true,
+        convertEol: true,
+        termProgram: 'xterm-256color'
     });
 
     // Initialize addons
@@ -218,12 +220,15 @@ function initTerminal() {
     // Open terminal in the container first
     terminal.open(document.getElementById('terminal'));
 
-    // Load all addons
+    // Load Unicode support first
+    terminal.loadAddon(unicode11Addon);
+    terminal.unicode.activeVersion = '11';
+
+    // Then load other addons
     terminal.loadAddon(fitAddon);
     terminal.loadAddon(webLinksAddon);
     terminal.loadAddon(searchAddon);
     terminal.loadAddon(serializeAddon);
-    terminal.loadAddon(unicode11Addon);
 
     // Try to load WebGL first, fallback to Canvas if it fails
     try {
@@ -338,44 +343,89 @@ function initTerminal() {
     });
 
     // WebSocket connection management
-    let ws = null;
-    let reconnectAttempts = 0;
+    let ws;
     const maxReconnectAttempts = 5;
-    const reconnectDelay = 1000; // Start with 1 second
+    const baseReconnectDelay = 1000;
+    let reconnectAttempts = 0;
 
     function connectWebSocket() {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        ws = new WebSocket(`${protocol}//${window.location.host}`);
+        const basePath = window.appConfig?.basePath || '';
+        
+        // Create WebSocket connection - cookies will be automatically included
+        ws = new WebSocket(`${protocol}//${window.location.host}${basePath}`);
+
+        // Set a generous timeout for the initial connection
+        const connectionTimeout = setTimeout(() => {
+            if (ws.readyState !== WebSocket.OPEN) {
+                ws.close();
+                handleReconnect();
+            }
+        }, 5000);
 
         ws.onopen = () => {
-            reconnectAttempts = 0; // Reset reconnect attempts on successful connection
+            clearTimeout(connectionTimeout);
+            reconnectAttempts = 0;
             terminal.writeln('Connected to terminal server...');
             terminal.focus();
+            
+            // Start sending heartbeats
+            startHeartbeat();
         };
 
-        ws.onclose = () => {
-            if (reconnectAttempts < maxReconnectAttempts) {
-                terminal.writeln('\r\nConnection lost. Attempting to reconnect...');
-                setTimeout(() => {
-                    reconnectAttempts++;
-                    connectWebSocket();
-                }, reconnectDelay * Math.pow(2, reconnectAttempts)); // Exponential backoff
-            } else {
-                terminal.writeln('\r\nConnection lost. Please refresh the page to reconnect.');
-            }
+        ws.onclose = (event) => {
+            handleReconnect(event);
         };
 
-        ws.onerror = () => {
-            terminal.writeln('\r\nWebSocket error occurred.');
+        ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+            ws.close();
         };
 
-        // Handle server output
         ws.onmessage = (event) => {
-            const message = JSON.parse(event.data);
-            if (message.type === 'output') {
-                terminal.write(message.data);
+            try {
+                const message = JSON.parse(event.data);
+                if (message.type === 'output') {
+                    terminal.write(message.data);
+                }
+            } catch (e) {
+                console.error('Error processing message:', e);
             }
         };
+    }
+
+    function handleReconnect(event) {
+        if (event && event.wasClean) {
+            terminal.writeln('\r\nConnection closed normally.');
+            return;
+        }
+
+        if (reconnectAttempts < maxReconnectAttempts) {
+            const delay = baseReconnectDelay * Math.pow(2, reconnectAttempts);
+            terminal.writeln('\r\nConnection lost. Attempting to reconnect...');
+            setTimeout(() => {
+                reconnectAttempts++;
+                connectWebSocket();
+            }, delay);
+        } else {
+            terminal.writeln('\r\nConnection lost. Please refresh the page to reconnect.');
+        }
+    }
+
+    // Heartbeat mechanism
+    function startHeartbeat() {
+        const heartbeatInterval = setInterval(() => {
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'heartbeat' }));
+            } else {
+                clearInterval(heartbeatInterval);
+            }
+        }, 10000);
+
+        // Clean up interval when connection closes
+        ws.addEventListener('close', () => {
+            clearInterval(heartbeatInterval);
+        });
     }
 
     // Initialize WebSocket connection
@@ -464,7 +514,7 @@ function initTerminal() {
 // Initialize functionality
 document.addEventListener('DOMContentLoaded', () => {
     // Set site title
-    const siteTitle = window.appConfig?.siteTitle || 'DumbTitle';
+    const siteTitle = window.appConfig?.siteTitle || 'DumbTerm';
     document.getElementById('pageTitle').textContent = siteTitle;
     document.getElementById('siteTitle').textContent = siteTitle;
     
