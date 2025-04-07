@@ -161,7 +161,7 @@ function submitPin(pin, inputs) {
 }
 
 // Terminal initialization
-function initTerminal() {
+function initTerminal(container) {
     const terminal = new Terminal({
         cursorBlink: true,
         fontSize: 15,
@@ -218,7 +218,7 @@ function initTerminal() {
     const unicode11Addon = new Unicode11Addon.Unicode11Addon();
 
     // Open terminal in the container first
-    terminal.open(document.getElementById('terminal'));
+    terminal.open(container);
 
     // Load Unicode support first
     terminal.loadAddon(unicode11Addon);
@@ -511,6 +511,156 @@ function initTerminal() {
     return terminal;
 }
 
+// Terminal management
+class TerminalManager {
+    constructor() {
+        this.terminals = new Map();
+        this.activeTabId = null;
+        this.tabCounter = 0;
+        
+        // Bind event handlers
+        this.handleNewTab = this.handleNewTab.bind(this);
+        this.handleTabClick = this.handleTabClick.bind(this);
+        this.handleTabClose = this.handleTabClose.bind(this);
+        
+        // Set up event listeners
+        const newTabButton = document.querySelector('.new-tab-button');
+        if (newTabButton) {
+            newTabButton.addEventListener('click', this.handleNewTab);
+        }
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Ignore shortcuts when in login page
+            if (document.getElementById('pinForm')) return;
+            
+            // Don't handle shortcuts when typing in terminal
+            if (e.target.closest('.xterm')) return;
+
+            // Command/Control + T: New tab
+            if ((e.metaKey || e.ctrlKey) && e.key === 't') {
+                e.preventDefault();
+                this.handleNewTab();
+            }
+            
+            // Command/Control + W: Close current tab
+            if ((e.metaKey || e.ctrlKey) && e.key === 'w') {
+                e.preventDefault();
+                if (this.activeTabId !== null) {
+                    this.handleTabClose(this.activeTabId);
+                }
+            }
+            
+            // Command/Control + Number: Switch to tab
+            if ((e.metaKey || e.ctrlKey) && /^[1-9]$/.test(e.key)) {
+                e.preventDefault();
+                const tabIndex = parseInt(e.key) - 1;
+                const tabIds = Array.from(this.terminals.keys());
+                if (tabIds[tabIndex]) {
+                    this.activateTab(tabIds[tabIndex]);
+                }
+            }
+        });
+    }
+
+    createTab(id) {
+        const tabList = document.querySelector('.tab-list');
+        const tab = document.createElement('div');
+        tab.className = 'terminal-tab';
+        tab.dataset.tabId = id;
+        tab.innerHTML = `
+            <span>Term${id + 1}</span>
+            <button class="close-tab" aria-label="Close terminal"></button>
+        `;
+        
+        tab.addEventListener('click', () => this.handleTabClick(id));
+        tab.querySelector('.close-tab').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.handleTabClose(id);
+        });
+        
+        tabList.appendChild(tab);
+        return tab;
+    }
+
+    createTerminalContainer(id) {
+        const container = document.createElement('div');
+        container.id = `terminal-${id}`;
+        document.querySelector('.terminals-container').appendChild(container);
+        return container;
+    }
+
+    handleNewTab() {
+        const id = this.tabCounter++;
+        const tab = this.createTab(id);
+        const container = this.createTerminalContainer(id);
+        const terminal = initTerminal(container);
+        
+        this.terminals.set(id, { tab, container, terminal });
+        this.activateTab(id);
+    }
+
+    handleTabClick(id) {
+        this.activateTab(id);
+    }
+
+    handleTabClose(id) {
+        const terminal = this.terminals.get(id);
+        if (!terminal) return;
+
+        const wasActive = this.activeTabId === id;
+
+        // Clean up terminal first
+        terminal.terminal.dispose();
+        terminal.tab.remove();
+        terminal.container.remove();
+        this.terminals.delete(id);
+
+        // If we just closed the active tab and there are other tabs, activate the last remaining tab
+        if (wasActive && this.terminals.size > 0) {
+            const remainingTabs = Array.from(this.terminals.keys());
+            const lastTab = remainingTabs[remainingTabs.length - 1];
+            this.activateTab(lastTab);
+        }
+
+        // If no tabs left, reset counter and create a new tab
+        if (this.terminals.size === 0) {
+            this.tabCounter = 0; // Reset counter so the next tab will be Term1
+            this.handleNewTab();
+        }
+    }
+
+    getNextTab(currentId) {
+        const ids = Array.from(this.terminals.keys());
+        const currentIndex = ids.indexOf(currentId);
+        
+        if (currentIndex === -1) return null;
+        
+        // Try to get next tab, if not available get previous
+        return ids[currentIndex + 1] || ids[currentIndex - 1] || null;
+    }
+
+    activateTab(id) {
+        // Deactivate current tab
+        if (this.activeTabId !== null) {
+            const current = this.terminals.get(this.activeTabId);
+            if (current) {
+                current.tab.classList.remove('active');
+                current.container.classList.remove('active');
+            }
+        }
+
+        // Activate new tab
+        const next = this.terminals.get(id);
+        if (next) {
+            next.tab.classList.add('active');
+            next.container.classList.add('active');
+            next.terminal.focus();
+            this.activeTabId = id;
+        }
+    }
+}
+
 // Initialize functionality
 document.addEventListener('DOMContentLoaded', () => {
     // Set site title
@@ -522,7 +672,6 @@ document.addEventListener('DOMContentLoaded', () => {
     setupPinInputs();
     
     const registerServiceWorker = () => {
-        // Register PWA Service Worker
         if ("serviceWorker" in navigator) {
             navigator.serviceWorker.register(joinPath('service-worker.js'))
                 .then((reg) => console.log("Service Worker registered:", reg.scope))
@@ -531,11 +680,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function initialize() {
-        if (document.getElementById('terminal')) {
-            initTerminal();
+        if (document.querySelector('.terminals-container')) {
+            window.terminalManager = new TerminalManager();
+            window.terminalManager.handleNewTab(); // Create initial tab
         }
         registerServiceWorker();
-    };
+    }
     
     initialize();
 });

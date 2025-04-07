@@ -93,7 +93,7 @@ main {
     background: var(--terminal-bg);
     border-radius: 12px;
     overflow: hidden;
-    margin-top: 1rem;
+    margin-top: 0.5rem;
     min-height: 0;
     height: calc(100% - 3rem);
     max-height: calc(100% - 3rem);
@@ -357,6 +357,183 @@ h2 {
     background: var(--terminal-border);
 }
 
+/* Terminal tabs styling */
+.terminal-tabs {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 36px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.terminal-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.tab-list {
+    display: flex;
+    gap: 0.25rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.terminal-tab {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 1rem;
+    background: var(--terminal-bg);
+    color: var(--terminal-text);
+    border: 1px solid var(--terminal-border);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    white-space: nowrap;
+    transition: all var(--transition);
+    min-width: 120px;
+    max-width: 200px;
+}
+
+.terminal-tab.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.terminal-tab:hover:not(.active) {
+    background: var(--terminal-border);
+}
+
+.terminal-tab .close-tab {
+    padding: 2px;
+    margin-left: auto;
+    border-radius: 4px;
+    opacity: 0.7;
+    transition: opacity var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    padding: 0;
+    margin-left: auto;
+    border: none;
+    background: none;
+    color: inherit;
+    cursor: pointer;
+    opacity: 0.6;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.terminal-tab .close-tab::before,
+.terminal-tab .close-tab::after {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 1.5px;
+    background-color: currentColor;
+    border-radius: 1px;
+    transition: transform var(--transition);
+}
+
+.terminal-tab .close-tab::before {
+    transform: rotate(45deg);
+}
+
+.terminal-tab .close-tab::after {
+    transform: rotate(-45deg);
+}
+
+.terminal-tab .close-tab:hover {
+    opacity: 1;
+}
+
+.terminal-tab .close-tab:hover::before {
+    transform: rotate(45deg) scale(1.2);
+}
+
+.terminal-tab .close-tab:hover::after {
+    transform: rotate(-45deg) scale(1.2);
+}
+
+.new-tab-button {
+    background: var(--terminal-bg);
+    color: var(--terminal-text);
+    border: 1px solid var(--terminal-border);
+    border-radius: 6px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 20px;
+    line-height: 1;
+    padding: 0;
+    margin-right: 8px;
+    transition: all var(--transition);
+    flex-shrink: 0;
+}
+
+.new-tab-button:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.terminals-container {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+    margin-top: 0.5rem;
+}
+
+.terminals-container > div {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--terminal-bg);
+    border-radius: 12px;
+    border: 1px solid var(--terminal-border);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition);
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    /* overflow: hidden; */
+}
+
+.terminals-container > div.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.xterm-viewport,
+.xterm-screen,
+.xterm-link-layer {
+    /* overflow: hidden !important; */
+    position: absolute;
+    inset: 0;
+}
+
+.xterm-link-layer {
+    pointer-events: none;
+}
+
+.xterm-link-layer > div {
+    pointer-events: auto;
+}
+
 /* Responsive adjustments */
 @media (max-width: 1000px) {
     .container {
@@ -369,8 +546,6 @@ h2 {
     #terminal {
         padding: 0.5rem;
         min-height: 250px;
-        height: calc(100vh - 6rem);
-        max-height: calc(100vh - 6rem);
         margin-top: 0.5rem;
     }
 }
@@ -401,8 +576,6 @@ h2 {
     #terminal {
         padding: 0.25rem;
         min-height: 200px;
-        height: calc(100vh - 4rem);
-        max-height: calc(100vh - 4rem);
     }
 }
 

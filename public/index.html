@@ -31,7 +31,15 @@
                 </svg>
             </button>
             <h1 id="siteTitle">DumbTerm</h1>
-            <div id="terminal"></div>
+            <div class="terminal-tabs">
+                <button class="new-tab-button" aria-label="New terminal">+</button>
+                <div class="tab-list">
+                    <!-- Tabs will be added here dynamically -->
+                </div>
+            </div>
+            <div class="terminals-container">
+                <div id="terminal" class="active"></div>
+            </div>
         </div>
     </main>
     <div class="dumbware-credit">
@@ -48,6 +56,6 @@
     <script src="node_modules/@xterm/addon-unicode11/lib/addon-unicode11.js"></script>
     <script src="node_modules/@xterm/addon-web-links/lib/addon-web-links.js"></script>
     <script src="node_modules/@xterm/addon-webgl/lib/addon-webgl.js"></script>
-    <script src="script.js"></script>
+    <script type="module" src="script.js"></script>
 </body>
 </html>
