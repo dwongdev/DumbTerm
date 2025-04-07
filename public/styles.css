@@ -1,39 +1,37 @@
-:root {
+:root, [data-theme="light"] {
     /* Light theme variables */
     --primary: #2196F3;
     --primary-hover: #1976D2;
+    --secondary-color: #e5e7eb;
     --background: #f5f5f5;
     --container: white;
     --text: #333;
     --border: #ccc;
     --shadow: 0 2px 4px rgba(0,0,0,0.1);
     --transition: 0.2s ease;
-    --terminal-bg: #1C1C1C;
-    --terminal-text: #E0E0E0;
-    --terminal-cursor: #4FD6BE;
-    --terminal-selection: rgba(79, 214, 190, 0.3);
-    --terminal-border: rgba(255, 255, 255, 0.1);
+    --terminal-bg: #FAFAFA;
+    --terminal-active:rgba(33, 149, 243, 0.8);
+    --terminal-text: #2C2C2C;
+    --terminal-cursor: #2B7D6E;
+    --terminal-selection: rgba(43, 125, 110, 0.3);
+    --terminal-border: rgba(0, 0, 0, 0.1);
+    --btn-default:rgba(231, 229, 229, 0.5);
 }
 
 [data-theme="dark"] {
     --background: #1a1a1a;
     --container: #2d2d2d;
+    --secondary-color: #374151;
     --text: white;
     --border: #404040;
     --shadow: 0 2px 4px rgba(0,0,0,0.2);
     --terminal-bg: #1C1C1C;
+    --terminal-active:rgba(33, 149, 243, 0.5);
     --terminal-text: #E0E0E0;
     --terminal-cursor: #4FD6BE;
     --terminal-selection: rgba(79, 214, 190, 0.3);
     --terminal-border: rgba(255, 255, 255, 0.1);
-}
-
-[data-theme="light"] {
-    --terminal-bg: #FAFAFA;
-    --terminal-text: #2C2C2C;
-    --terminal-cursor: #2B7D6E;
-    --terminal-selection: rgba(43, 125, 110, 0.3);
-    --terminal-border: rgba(0, 0, 0, 0.1);
+    --btn-default:rgba(231, 229, 229, 0.3);
 }
 
 /* Base styles */
@@ -302,6 +300,24 @@ h2 {
     opacity: 0.8;
 }
 
+.tooltip {
+    position: absolute;
+    background-color: var(--secondary-color);
+    color: var(--text-color);
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: 1000; /* Ensure it's above other elements */
+}
+
+.tooltip.show {
+    visibility: visible;
+    opacity: 1;
+}
+
 /* Terminal search styling */
 .terminal-search-container {
     position: absolute;
@@ -397,7 +413,7 @@ h2 {
 }
 
 .terminal-tab.active {
-    background: var(--primary);
+    background: var(--terminal-active);
     border-color: var(--primary);
     color: white;
 }
@@ -462,7 +478,7 @@ h2 {
 }
 
 .new-tab-button {
-    background: var(--terminal-bg);
+    background: var(--btn-default);
     color: var(--terminal-text);
     border: 1px solid var(--terminal-border);
     border-radius: 6px;

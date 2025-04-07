@@ -16,55 +16,6 @@ const { originValidationMiddleware, getCorsOptions, validateOrigin } = require('
 const app = express();
 const server = http.createServer(app);
 
-// WebSocket server configuration
-const wss = new WebSocketServer({ 
-    server,
-    verifyClient: (info, cb) => {
-        debugLog('Verifying WebSocket connection from:', info.req.headers.origin);
-        
-        // If no PIN is set, allow the connection immediately
-        if (!PIN || PIN.trim() === '') {
-            debugLog('No PIN required, allowing WebSocket connection');
-            return cb(true);
-        }
-
-        // Parse cookies from the upgrade request
-        const cookieHeader = info.req.headers.cookie;
-        debugLog('Cookie header:', cookieHeader || 'No cookie header present');
-        
-        if (!cookieHeader) {
-            debugLog('No cookies in request, closing connection');
-            return cb(false, 401, 'No cookies found');
-        }
-
-        // Parse cookies
-        const cookies = {};
-        cookieHeader.split(';').forEach(cookie => {
-            const parts = cookie.split('=');
-            cookies[parts[0].trim()] = parts[1].trim();
-        });
-        debugLog('Parsed cookies:', cookies);
-
-        // Verify the PIN cookie
-        const pinCookieName = `${projectName}_PIN`;
-        const pinCookie = cookies[pinCookieName];
-        debugLog(`Looking for cookie: ${pinCookieName}`);
-        
-        if (pinCookie) {
-            const isValidPin = verifyPin(PIN, pinCookie);
-            debugLog('PIN cookie verification:', isValidPin ? 'success' : 'failed');
-            if (isValidPin) {
-                return cb(true);
-            }
-        } else {
-            debugLog(`${pinCookieName} cookie not found`);
-        }
-
-        debugLog('Authentication failed, rejecting WebSocket connection');
-        return cb(false, 401, 'Unauthorized');
-    }
-});
-
 const PORT = process.env.PORT || 3000;
 const DEBUG = process.env.DEBUG === 'TRUE';
 const NODE_ENV = process.env.NODE_ENV || 'production';
@@ -171,15 +122,27 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: process.env.NODE_ENV === 'production',
+        secure: (BASE_URL.startsWith('https') && process.env.NODE_ENV === 'production'),
         httpOnly: true,
         sameSite: 'strict',
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
     }
 }));
 
+const requirePin = (req, res, next) => {
+    if (!PIN || !isValidPin(PIN)) {
+        return next();
+    }
+
+    const authCookie = req.cookies[COOKIE_NAME];
+    if (!authCookie || !secureCompare(authCookie, PIN)) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+    next();
+};
+
 // Constant-time PIN comparison to prevent timing attacks
-function verifyPin(storedPin, providedPin) {
+const verifyPin = (storedPin, providedPin) => {
     if (!storedPin || !providedPin) return false;
     if (storedPin.length !== providedPin.length) return false;
     
@@ -213,6 +176,10 @@ const authMiddleware = (req, res, next) => {
     next();
 };
 
+app.get(BASE_PATH + '/', [originValidationMiddleware, authMiddleware], (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 // Serve config.js for frontend
 app.get(BASE_PATH + '/config.js', (req, res) => {
     debugLog('Serving config.js with basePath:', BASE_PATH);
@@ -226,25 +193,23 @@ app.get(BASE_PATH + '/config.js', (req, res) => {
 });
 
 // Serve static files for public assets
-app.use(BASE_PATH + '/styles.css', express.static('public/styles.css'));
-app.use(BASE_PATH + '/script.js', express.static('public/script.js'));
-app.use(BASE_PATH + '/service-worker.js', express.static('public/service-worker.js'));
-app.use(BASE_PATH + '/assets', express.static(path.join(PUBLIC_DIR, 'assets'))); // Add assets directory serving
-app.use(BASE_PATH + '/node_modules', express.static('public/node_modules'));
-
+app.use(BASE_PATH + '/', express.static(path.join(PUBLIC_DIR)));
+// app.use(BASE_PATH + '/styles.css', express.static('public/styles.css'));
+// app.use(BASE_PATH + '/script.js', express.static('public/script.js'));
+// app.use(BASE_PATH + '/service-worker.js', express.static('public/service-worker.js'));
+// app.use(BASE_PATH + '/assets', express.static(path.join(PUBLIC_DIR, 'assets')));
+// app.use(BASE_PATH + '/node_modules', express.static('public/node_modules'));
 app.get(BASE_PATH + "/manifest.json", (req, res) => {
     res.sendFile(path.join(ASSETS_DIR, "manifest.json"));
 });
-
 app.get(BASE_PATH + "/asset-manifest.json", (req, res) => {
     res.sendFile(path.join(ASSETS_DIR, "asset-manifest.json"));
 });
+app.use('/node_modules/@xterm/', express.static(
+    path.join(__dirname, 'node_modules/@xterm/')
+));
 
 // Routes
-app.get(BASE_PATH + '/', [originValidationMiddleware, authMiddleware], (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
 app.get(BASE_PATH + '/login', (req, res) => {
     // If no PIN is set, redirect to index
     if (!PIN || PIN.trim() === '') {
@@ -330,6 +295,21 @@ app.post(BASE_PATH + '/verify-pin', (req, res) => {
     }, delay);
 });
 
+// WebSocket server configuration
+const wss = new WebSocketServer({ 
+    server,
+    verifyClient: (info, callback) => {
+        debugLog('Verifying WebSocket connection from:', info.req.headers.origin);
+        
+        const isOriginValid = validateOrigin(info.req.headers.origin);
+        if (isOriginValid) callback(true); // allow the connection
+        else {
+            console.warn("Blocked connection from origin:", {origin});
+            callback(false, 403, 'Forbidden'); // reject the connection
+        }
+    }
+});
+
 // WebSocket connection handling
 wss.on('connection', (ws, req) => {
     debugLog('New WebSocket connection attempt');
@@ -349,6 +329,13 @@ wss.on('connection', (ws, req) => {
         ws.terminate();
     });
 
+    // If no PIN is set, allow the connection
+    if (!PIN || PIN.trim() === '') {
+        debugLog('No PIN required, creating terminal');
+        createTerminal(ws);
+        return;
+    }
+
     if (!req.headers.cookie) {
         debugLog('No cookies found, closing connection');
         ws.close();
@@ -362,12 +349,6 @@ wss.on('connection', (ws, req) => {
         parsedCookies[parts[0].trim()] = parts[1].trim();
     });
 
-    // If no PIN is set, allow the connection
-    if (!PIN || PIN.trim() === '') {
-        debugLog('No PIN required, creating terminal');
-        createTerminal(ws);
-        return;
-    }
 
     // Check if the user has the correct PIN cookie
     const pinCookie = parsedCookies[`${projectName}_PIN`];
