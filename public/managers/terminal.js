@@ -190,9 +190,9 @@ export default class TerminalManager {
             allowTransparency: true,
             macOptionIsMeta: true,
             scrollback: 5000,
-            minimumContrastRatio: 4.5,
+            minimumContrastRatio: 50,
             cursorStyle: 'block',
-            cursorWidth: 2,
+            cursorWidth: 1.5,
             letterSpacing: 0.5,
             lineHeight: 1.2,
             windowOptions: {

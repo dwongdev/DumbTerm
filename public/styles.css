@@ -12,8 +12,8 @@
     --terminal-bg: #FAFAFA;
     --terminal-active:rgba(33, 149, 243, 0.8);
     --terminal-text: #2C2C2C;
-    --terminal-cursor: #2B7D6E;
-    --terminal-selection: rgba(43, 125, 110, 0.3);
+    --terminal-cursor: gray;
+    --terminal-selection: rgba(33, 149, 243, 0.3);
     --terminal-border: rgba(0, 0, 0, 0.1);
     --btn-default:rgba(231, 229, 229, 0.5);
 }
@@ -28,8 +28,8 @@
     --terminal-bg: #1C1C1C;
     --terminal-active:rgba(33, 149, 243, 0.5);
     --terminal-text: #E0E0E0;
-    --terminal-cursor: #4FD6BE;
-    --terminal-selection: rgba(79, 214, 190, 0.3);
+    --terminal-cursor: gray;
+    --terminal-selection: rgba(33, 149, 243, 0.2);
     --terminal-border: rgba(255, 255, 255, 0.1);
     --btn-default:rgba(231, 229, 229, 0.3);
 }
