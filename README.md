@@ -59,7 +59,9 @@ DumbTerm includes the following XTerm.js addons to enhance your terminal experie
 * Docker (recommended)
 * Node.js >=20.0.0 (for local development)
 
-### Option 1: Docker (For Dummies)
+### Option 1: Docker (For Dummies) - Recommended
+
+* Docker method uses a Debian Bullseye-based container with a pre-installed terminal environment.
 
 ```bash
 # Pull and run with one command
@@ -70,6 +72,9 @@ docker run -p 3000:3000 \
   -e SITE_TITLE=DumbTerm \
   -e BASE_URL=http://localhost:3000 \
   -e ALLOWED_ORIGINS=http://localhost:3000 \
+  -e ENABLE_STARSHIP=true \
+  -e TZ=America/Los_Angeles \
+  -e LOCKOUT_TIME=15 \
   dumbwareio/dumbterm:latest
 ```
 
@@ -114,6 +119,8 @@ docker compose up -d
 
 ### Option 3: Running Locally (For Developers)
 
+* Local method will use your local terminal environment (Windows: Powershell, Mac / Linux: bash).
+
 1. Install dependencies:
 ```bash
 npm install
@@ -150,6 +157,12 @@ npm start
 | LOCKOUT_TIME        | Custom Pin Lockout Time (in minutes)                        | 15                     | No       |
 
 ## Security
+
+
+>  It is highly recommended to set a strong PIN, use HTTPS, use ALLOWED_ORIGINS, and integrate with an auth provider (i.e. Authentik / Authelia, etc).
+
+* https://github.com/goauthentik/authentik
+* https://github.com/authelia/authelia
 
 ### Features
 
