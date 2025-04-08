@@ -21,6 +21,7 @@ A stupidly simple web-based terminal emulator.
 ## Features
 
 - 🖥️ Web-based terminal access from anywhere
+- 🏘️ Multiple terminal sessions
 - 🌙 Dark mode support
 - 📱 Responsive design for mobile and desktop
 - 🐳 Docker support (Debian-based container)
