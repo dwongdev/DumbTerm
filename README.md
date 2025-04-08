@@ -67,7 +67,7 @@ DumbTerm includes the following XTerm.js addons to enhance your terminal experie
 # Pull and run with one command
 docker run -p 3000:3000 \
   -v ./data:/root/data \
-  -v ./config/starship.toml:/root/.config/starship.toml \
+  -v ./config:/root/.config \ 
   -e DUMBTERM_PIN=1234 \
   -e SITE_TITLE=DumbTerm \
   -e BASE_URL=http://localhost:3000 \
@@ -95,7 +95,7 @@ services:
     ports:
       - ${DUMBTERM_PORT:-3000}:3000
     volumes:
-      - ${DUMBTERM_CONFIG:-./config/starship.toml}:/root/.config/starship.toml
+      - ${DUMBTERM_CONFIG:-./config}:/root/.config
       - ${DUMBTERM_DATA_DIR:-./data}:/root/data
     environment:
       # Container timezone
@@ -207,7 +207,7 @@ npm start
 - PIN protection (recommended) prevents unauthorized access
 - Starship prompt provides a beautiful terminal experience with git status, command duration, etc.
 - Use the data directory to persist files between container restarts
-- Pre-installed utilities include: apt-utils, curl, wget, ssh, git, vim, nano, htop, net-tools, iputils-ping, telnet, fontconfig, unzip, locales.
+- Pre-installed utilities include: apt-utils, curl, wget, ssh, git, vim, nano, htop, net-tools, iputils-ping, fontconfig, unzip, locales.
 
 ## Links
 

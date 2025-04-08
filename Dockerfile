@@ -12,7 +12,6 @@ RUN apt-get update && apt-get install -y \
     htop \
     net-tools \
     iputils-ping \
-    telnet \
     fontconfig \
     unzip \
     locales \

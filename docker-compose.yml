@@ -7,7 +7,7 @@ services:
     ports:
       - ${DUMBTERM_PORT:-3000}:3000
     volumes:
-      - ${DUMBTERM_CONFIG:-./config/starship.toml}:/root/.config/starship.toml
+      - ${DUMBTERM_CONFIG:-./config}:/root/.config
       - ${DUMBTERM_DATA_DIR:-./data}:/root/data # Map the data directory to a local folder
     environment:
       # Container timezone
