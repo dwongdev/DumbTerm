@@ -2,7 +2,7 @@
 
 A stupidly simple web-based terminal emulator.
 
-![image](https://github.com/user-attachments/assets/97c19b77-1c43-4a57-acb4-3e1789fbfe8c)
+![dumbterm-preview](https://github.com/user-attachments/assets/d7847f80-a8fc-428c-9515-2c299ebd8f67)
 
 ## Table of Contents
 - [Features](#features)
@@ -21,13 +21,12 @@ A stupidly simple web-based terminal emulator.
 ## Features
 
 - 🖥️ Web-based terminal access from anywhere
-- 🏘️ Multiple terminal sessions
 - 🌙 Dark mode support
 - 📱 Responsive design for mobile and desktop
 - 🐳 Docker support (Debian-based container)
-- 🔧 Pre-installed utilities: wget, curl, ssh, git, vim, nano, htop, unzip and more.
+- 🔧 Pre-installed utilities: starship, nerdfonts, wget, curl, ssh, git, vim, nano, htop, unzip and more.
 - 🔒 Optional PIN protection (numeric)
-- ✨ Starship prompt integration for beautiful terminal experience (nerdfont support still in progress)
+- ✨ Starship prompt integration for beautiful terminal experience
 - 🔍 Terminal search functionality (`ctrl+f` or `cmd+f`)
 - 📂 Custom volume mappings
 - 🔗 In-terminal hyperlinks
@@ -157,13 +156,66 @@ npm start
 | DEBUG               | Enable debug logging                                        | FALSE                  | No       |
 | LOCKOUT_TIME        | Custom Pin Lockout Time (in minutes)                        | 15                     | No       |
 
+## Starship usage
+* Starship is a cross-shell prompt that provides a beautiful terminal experience.
+* It is enabled by default in the Docker image and is the recommended method.
+* To disable it, set `ENABLE_STARSHIP` to `false` in your environment variables.
+* You can customize the Starship prompt by using one of the following steps:
+
+### 1. Use a preset configuration from starship.
+
+#### Starship Presets:
+> copy and paste one of the starship preset commands below into DumbTerm and that's it!
+<details>
+<summary>Example:</summary>
+
+![preset-preview](https://github.com/user-attachments/assets/affdd780-5471-40de-adfd-9242feeec9da)
+</details>
+<br/>
+
+<details>
+<summary>View All Starship Presets:</summary>
+
+| Preset Name | Command | Preview |
+|-------------|---------|---------|
+| Nerd Font Symbols | `starship preset nerd-font-symbols -o ~/.config/starship.toml` | ![Nerd Font Symbols](https://starship.rs/presets/img/nerd-font-symbols.png) |
+| Bracketed Segments | `starship preset bracketed-segments -o ~/.config/starship.toml` | ![Bracketed Segments](https://starship.rs/presets/img/bracketed-segments.png) |
+| Plain Text Symbols | `starship preset plain-text-symbols -o ~/.config/starship.toml` | ![Plain Text Symbols](https://starship.rs/presets/img/plain-text-symbols.png) |
+| No Runtime Versions | `starship preset no-runtime-versions -o ~/.config/starship.toml` | ![No Runtime Versions](https://starship.rs/presets/img/no-runtime-versions.png) |
+| No Empty Icons | `starship preset no-empty-icons -o ~/.config/starship.toml` | ![No Empty Icons](https://starship.rs/presets/img/no-empty-icons.png) |
+| Pure Prompt | `starship preset pure-preset -o ~/.config/starship.toml` | ![Pure Prompt](https://starship.rs/presets/img/pure-preset.png) |
+| Pastel Powerline | `starship preset pastel-powerline -o ~/.config/starship.toml` | ![Pastel Powerline](https://starship.rs/presets/img/pastel-powerline.png) |
+| Tokyo Night `(DumbTerm Default)` | `starship preset tokyo-night -o ~/.config/starship.toml` | ![Tokyo Night](https://starship.rs/presets/img/tokyo-night.png) |
+| Gruvbox Rainbow | `starship preset gruvbox-rainbow -o ~/.config/starship.toml` | ![Gruvbox Rainbow](https://starship.rs/presets/img/gruvbox-rainbow.png) |
+| Jetpack | `starship preset jetpack -o ~/.config/starship.toml` | ![Jetpack](https://starship.rs/presets/img/jetpack.png) |
+| No Nerd Fonts | `starship preset no-nerd-font -o ~/.config/starship.toml` | N/A |
+</details>
+
+- You can also view the available presets by running `starship preset -l` in DumbTerm.
+
+For more details, visit the [Starship Presets page](https://starship.rs/presets/).
+
+### 2. Modify the `~/.config/starship.toml` file in your set volume mount or within the container.  
+  - The default configuration is located in `/root/.config/starship.toml`.
+  - You can also mount a custom `starship.toml` file to the container using Docker volumes.
+  - Update or add your custom configurations to starship.toml.
+    - Visit [Starship Configuration](https://starship.rs/config/) for more information on customizing the prompt.
+
+### 3. Running locally
+- If you are running DumbTerm locally, DumbTerm will inherit your current styles.
+  - Meaning if you already have starship enabled locally, you should be able to see your current styles accordingly.
+- You must install Starship on your local machine if you wish to use DumbTerm with starship _locally_.
+  - To install Starship, follow the instructions on the [Starship installation page](https://starship.rs/installing/).
+
 ## Security
 
+>  It is highly recommended to set a strong PIN, use HTTPS, use ALLOWED_ORIGINS, and integrate with an auth provider (i.e. Authentik / Authelia / tinyauth, etc).
 
->  It is highly recommended to set a strong PIN, use HTTPS, use ALLOWED_ORIGINS, and integrate with an auth provider (i.e. Authentik / Authelia, etc).
+We're dumb, but not stupid. Use a full-featured auth provider for production use.
 
 * https://github.com/goauthentik/authentik
 * https://github.com/authelia/authelia
+* https://github.com/steveiliop56/tinyauth (Potentially will integrate with DumbTerm)
 
 ### Features
 
@@ -208,7 +260,7 @@ npm start
 - PIN protection (recommended) prevents unauthorized access
 - Starship prompt provides a beautiful terminal experience with git status, command duration, etc.
 - Use the data directory to persist files between container restarts
-- Pre-installed utilities include: apt-utils, curl, wget, ssh, git, vim, nano, htop, net-tools, iputils-ping, fontconfig, unzip, locales.
+- Pre-installed utilities include: starship, nerdfonts, apt-utils, curl, wget, ssh, git, vim, nano, htop, net-tools, iputils-ping, fontconfig, unzip, locales.
 
 ## Links
 
@@ -236,7 +288,7 @@ Made with ❤️ by DumbWare.io & [gitmotion](https://github.com/gitmotion)
 
 ## Future Features
 
+* tinyauth integration
 * Persistent terminal history
-* Full nerd font support for starship configurations
 
 > Got an idea? Open an issue or submit a PR

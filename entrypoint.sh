@@ -1,27 +1,7 @@
 #!/bin/bash
 
-# Function to install Nerd Fonts
-install_nerdfonts() {
-    echo "Installing JetBrainsMono Nerd Font..."
-    WORKING_DIR=$(pwd)  # Save current working directory
-    mkdir -p /usr/local/share/fonts/
-    cd /usr/local/share/fonts/
-    wget -q --show-progress --progress=bar:force:noscroll \
-        "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.1.1/JetBrainsMono.zip"
-    unzip -o JetBrainsMono.zip -d JetBrainsMono
-    rm JetBrainsMono.zip
-    fc-cache -fv
-    cd "$WORKING_DIR"  # Return to original working directory
-}
-
-# Function to remove Nerd Fonts and Starship
-remove_customizations() {
-    if [ -d "/usr/local/share/fonts/JetBrainsMono" ]; then
-        echo "Removing Nerd Fonts..."
-        rm -rf /usr/local/share/fonts/JetBrainsMono
-        fc-cache -fv
-    fi
-
+# Function to remove and Starship
+remove_customizations() {   
     # Remove Starship binary if it exists
     if [ -f "/usr/local/bin/starship" ]; then
         echo "Removing Starship..."
@@ -42,10 +22,6 @@ sed -i '/eval "$(starship init bash)"/d' /root/.bashrc
 
 # Handle Starship and Nerd Fonts based on ENABLE_STARSHIP env var
 if [ "$ENABLE_STARSHIP" = "true" ]; then
-    # Still looking into getting nerdfonts to render correctly so far now we're using the no nerdfonts preset
-    # Install Nerd Fonts
-    # install_nerdfonts
-
     # Create config directory and copy starship config if it exists
     mkdir -p /root/.config
     if [ -f "/app/config/starship.toml" ]; then
