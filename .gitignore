@@ -137,6 +137,9 @@ dist
 .DS_Store
 Thumbs.db
 
+# Data folder for the data volume mapping
+data/
+
 # Generated PWA Files
 /public/*manifest.json
 /public/assets/*manifest.json

@@ -2,14 +2,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Theme toggle functionality
     function initThemeToggle() {
         const themeToggle = document.getElementById('themeToggle');
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
-        
-        // Set initial theme based on system preference
-        if (localStorage.getItem('theme') === null) {
-            document.documentElement.setAttribute('data-theme', prefersDark.matches ? 'dark' : 'light');
-        } else {
-            document.documentElement.setAttribute('data-theme', localStorage.getItem('theme'));
-        }
 
         themeToggle.addEventListener('click', () => {
             const currentTheme = document.documentElement.getAttribute('data-theme');

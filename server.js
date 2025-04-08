@@ -1,7 +1,6 @@
 require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
-const helmet = require('helmet');
 const crypto = require('crypto');
 const path = require('path');
 const cookieParser = require('cookie-parser');
@@ -70,7 +69,7 @@ if (!PIN || PIN.trim() === '') {
 // Brute force protection
 const loginAttempts = new Map();
 const MAX_ATTEMPTS = 5;
-const LOCKOUT_TIME = 15 * 60 * 1000; // 15 minutes in milliseconds
+const LOCKOUT_TIME = (process.env.LOCKOUT_TIME || 15) * 60 * 1000; // default 15 minutes in milliseconds
 
 function resetAttempts(ip) {
     debugLog('Resetting login attempts for IP:', ip);
@@ -103,16 +102,6 @@ function recordAttempt(ip) {
 // Security middleware
 app.set('trust proxy', 1);
 app.use(cors(getCorsOptions(BASE_URL)));
-// app.use(helmet({
-//     contentSecurityPolicy: {
-//         directives: {
-//             defaultSrc: ["'self'"],
-//             scriptSrc: ["'self'"],
-//             styleSrc: ["'self'", "'unsafe-inline'"],
-//             imgSrc: ["'self'"],
-//         },
-//     },
-// }));
 app.use(express.json());
 app.use(cookieParser());
 
@@ -194,11 +183,6 @@ app.get(BASE_PATH + '/config.js', (req, res) => {
 
 // Serve static files for public assets
 app.use(BASE_PATH + '/', express.static(path.join(PUBLIC_DIR)));
-// app.use(BASE_PATH + '/styles.css', express.static('public/styles.css'));
-// app.use(BASE_PATH + '/script.js', express.static('public/script.js'));
-// app.use(BASE_PATH + '/service-worker.js', express.static('public/service-worker.js'));
-// app.use(BASE_PATH + '/assets', express.static(path.join(PUBLIC_DIR, 'assets')));
-// app.use(BASE_PATH + '/node_modules', express.static('public/node_modules'));
 app.get(BASE_PATH + "/manifest.json", (req, res) => {
     res.sendFile(path.join(ASSETS_DIR, "manifest.json"));
 });

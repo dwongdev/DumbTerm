@@ -7,6 +7,16 @@
     <script src="config.js"></script>
     <link rel="stylesheet" href="styles.css">
     <link rel="icon" type="image/svg+xml" href="assets/dumbterm.svg">
+    <script>
+        (function() { // Initialize theme immediately - Prevents theme flicker
+            let theme = localStorage.getItem('theme');
+            if (!theme) {
+                theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                localStorage.setItem('theme', theme);
+            } 
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
 </head>
 <body>
     <main>

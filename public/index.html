@@ -10,7 +10,16 @@
     <link rel="alternate icon" type="image/png" href="assets/dumbterm.png">
     <link rel="stylesheet" href="node_modules/@xterm/xterm/css/xterm.css" />
     <link rel="manifest" href="manifest.json">
-
+    <script>
+        (function() { // Initialize theme immediately - Prevents theme flicker
+            let theme = localStorage.getItem('theme');
+            if (!theme) {
+                theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                localStorage.setItem('theme', theme);
+            } 
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
     <script src="./node_modules/@xterm/xterm/lib/xterm.js"></script>
     <script src="./node_modules/@xterm/addon-attach/lib/addon-attach.js"></script>
     <script src="./node_modules/@xterm/addon-canvas/lib/addon-canvas.js"></script>
@@ -55,7 +64,7 @@
         </div>
     </main>
     <div class="dumbware-credit">
-        Built by <a href="https://dumbware.io" target="_blank" rel="noopener noreferrer">DumbWare</a>
+        Built by <a href="https://dumbware.io" target="_blank" rel="noopener noreferrer">DumbWareio</a>
     </div>
     <script type="module" src="index.js"></script>
 </body>
