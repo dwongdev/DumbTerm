@@ -163,7 +163,7 @@ export default class TerminalManager {
         const terminal = new Terminal({
             cursorBlink: true,
             fontSize: 15,
-            fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+            fontFamily: getComputedStyle(document.documentElement).getPropertyValue('--terminal-font').trim(),
             theme: {
                 background: getComputedStyle(document.documentElement).getPropertyValue('--terminal-bg').trim(),
                 foreground: getComputedStyle(document.documentElement).getPropertyValue('--terminal-text').trim(),

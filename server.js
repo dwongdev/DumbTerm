@@ -189,6 +189,8 @@ app.get(BASE_PATH + "/manifest.json", (req, res) => {
 app.get(BASE_PATH + "/asset-manifest.json", (req, res) => {
     res.sendFile(path.join(ASSETS_DIR, "asset-manifest.json"));
 });
+// Serve font files
+app.use('/fonts', express.static(path.join(PUBLIC_DIR, 'fonts')));
 app.use('/node_modules/@xterm/', express.static(
     path.join(__dirname, 'node_modules/@xterm/')
 ));

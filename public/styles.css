@@ -1,3 +1,28 @@
+/* NerdFont Integration */
+@font-face {
+    font-family: 'JetBrainsMono Nerd Font';
+    src: url('/assets/fonts/JetBrainsMonoNerdFontMono-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'JetBrainsMono Nerd Font';
+    src: url('/assets/fonts/JetBrainsMonoNerdFontMono-Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'JetBrainsMono Nerd Font';
+    src: url('/assets/fonts/JetBrainsMonoNerdFontMono-Italic.ttf') format('truetype');
+    font-weight: normal;
+    font-style: italic;
+    font-display: swap;
+}
+
 :root, [data-theme="light"] {
     /* Light theme variables */
     --primary: #2196F3;
@@ -16,6 +41,7 @@
     --terminal-selection: rgba(33, 149, 243, 0.3);
     --terminal-border: rgba(0, 0, 0, 0.1);
     --btn-default:rgba(231, 229, 229, 0.5);
+    --terminal-font: 'JetBrainsMono Nerd Font', Menlo, Monaco, 'Courier New', monospace;
 }
 
 [data-theme="dark"] {
@@ -102,7 +128,7 @@ main {
 .xterm {
     height: 100%;
     padding: 0.5rem;
-    font-family: Menlo, Monaco, 'Courier New', monospace !important;
+    font-family: var(--terminal-font) !important;
     font-feature-settings: "liga" 1, "calt" 1; /* Enable ligatures */
     padding-right: 15px; /* Match scrollbar width */
     padding-bottom: 5px;
