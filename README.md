@@ -2,7 +2,7 @@
 
 A stupidly simple web-based terminal emulator, with common tools and Starship enabled! 🚀
 
-![dumbterm-preview](https://github.com/user-attachments/assets/d7847f80-a8fc-428c-9515-2c299ebd8f67)
+![dumbterm-preview](https://github.com/user-attachments/assets/46d4f035-9675-4fc3-9493-b6c896d53911)
 
 ## Table of Contents
 - [Features](#features)
@@ -185,7 +185,7 @@ npm start
 | No Empty Icons | `starship preset no-empty-icons -o ~/.config/starship.toml` | ![No Empty Icons](https://starship.rs/presets/img/no-empty-icons.png) |
 | Pure Prompt | `starship preset pure-preset -o ~/.config/starship.toml` | ![Pure Prompt](https://starship.rs/presets/img/pure-preset.png) |
 | Pastel Powerline | `starship preset pastel-powerline -o ~/.config/starship.toml` | ![Pastel Powerline](https://starship.rs/presets/img/pastel-powerline.png) |
-| Tokyo Night `(DumbTerm Default)` | `starship preset tokyo-night -o ~/.config/starship.toml` | ![Tokyo Night](https://starship.rs/presets/img/tokyo-night.png) |
+| Tokyo Night `(DumbTerm Default with mods)` | `starship preset tokyo-night -o ~/.config/starship.toml` | ![Tokyo Night](https://starship.rs/presets/img/tokyo-night.png) |
 | Gruvbox Rainbow | `starship preset gruvbox-rainbow -o ~/.config/starship.toml` | ![Gruvbox Rainbow](https://starship.rs/presets/img/gruvbox-rainbow.png) |
 | Jetpack | `starship preset jetpack -o ~/.config/starship.toml` | ![Jetpack](https://starship.rs/presets/img/jetpack.png) |
 | No Nerd Fonts | `starship preset no-nerd-font -o ~/.config/starship.toml` | N/A |
