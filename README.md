@@ -1,6 +1,6 @@
 # DumbTerm
 
-A stupidly simple web-based terminal emulator.
+A stupidly simple web-based terminal emulator, with common tools and Starship enabled! 🚀
 
 ![dumbterm-preview](https://github.com/user-attachments/assets/d7847f80-a8fc-428c-9515-2c299ebd8f67)
 
