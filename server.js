@@ -19,7 +19,8 @@ const PORT = process.env.PORT || 3000;
 const DEBUG = process.env.DEBUG === 'TRUE';
 const NODE_ENV = process.env.NODE_ENV || 'production';
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
-const SITE_TITLE = process.env.SITE_TITLE || 'DumbTerm';
+const DEMO_MODE = process.env.DEMO_MODE === 'true';
+const SITE_TITLE = DEMO_MODE ? `${process.env.SITE_TITLE || 'DumbTerm'} (DEMO MODE)` : (process.env.SITE_TITLE || 'DumbTerm');
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const ASSETS_DIR = path.join(PUBLIC_DIR, 'assets');
 
@@ -176,7 +177,7 @@ app.get(BASE_PATH + '/config.js', (req, res) => {
         window.appConfig = {
             basePath: '${BASE_PATH}',
             debug: ${DEBUG},
-            siteTitle: '${process.env.SITE_TITLE || 'DumbTerm'}'
+            siteTitle: '${SITE_TITLE}'
         };
     `);
 });
@@ -375,11 +376,13 @@ process.on('SIGTERM', () => {
 function createTerminal(ws) {
     // Create terminal process
     const shell = process.env.SHELL || (os.platform() === 'win32' ? 'powershell.exe' : 'bash');
-    const term = pty.spawn(shell, [], {
+    const ptyModule = DEMO_MODE ? require('./scripts/demo/terminal') : pty;
+    
+    const term = ptyModule.spawn(shell, [], {
         name: 'xterm-256color',
         cols: 80,
         rows: 24,
-        cwd: process.env.HOME || '/root',
+        cwd: DEMO_MODE ? '/home/demo' : (process.env.HOME || '/root'),
         env: {
             ...process.env,
             TERM: 'xterm-256color',
@@ -389,7 +392,7 @@ function createTerminal(ws) {
         }
     });
 
-    debugLog('Terminal created with PID:', term.pid);
+    debugLog(`Terminal created with PID: ${term.pid}${DEMO_MODE ? ' (Demo Mode)' : ''}`);
 
     // Handle incoming data from client
     ws.on('message', (data) => {
@@ -451,7 +454,8 @@ server.listen(PORT, () => {
         basePath: BASE_PATH,
         pinProtection: !!PIN,
         nodeEnv: process.env.NODE_ENV || 'development',
-        debug: DEBUG
+        debug: DEBUG,
+        demoMode: DEMO_MODE
     });
     console.log(`Server running on port ${PORT}`);
 });

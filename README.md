@@ -164,6 +164,7 @@ npm start
 | ALLOWED_ORIGINS     | Allowed CORS origins (comma-separated list)                 | * (all origins)        | No       |
 | DEBUG               | Enable debug logging                                        | FALSE                  | No       |
 | LOCKOUT_TIME        | Custom Pin Lockout Time (in minutes)                        | 15                     | No       |
+| DEMO_MODE           | Enable demo mode with simulated terminal                    | false                  | No       |
 
 ## Starship usage
 * Starship is a cross-shell prompt that provides a beautiful terminal experience.
@@ -267,6 +268,7 @@ We're dumb, but not stupid. Use a full-featured auth provider for production use
 - Access your terminal from any device with a web browser
 - Execute commands just like in a native terminal
 - PIN protection (recommended) prevents unauthorized access
+- Demo mode available for testing and demonstrations - simulated terminal (set DEMO_MODE=true)
 - Starship prompt provides a beautiful terminal experience with git status, command duration, etc.
 - Use the data directory to persist files between container restarts
 - Pre-installed utilities include: starship, nerdfonts, apt-utils, curl, wget, ssh, git, vim, nano, htop, net-tools, iputils-ping, fontconfig, unzip, locales.

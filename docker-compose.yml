@@ -20,6 +20,7 @@ services:
       BASE_URL: ${DUMBTERM_BASE_URL:-http://localhost:3000} # Use ALLOWED_ORIGINS below to restrict cors to specific origins
       ENABLE_STARSHIP: ${ENABLE_STARSHIP:-true}
       LOCKOUT_TIME: ${DUMBTERM_LOCKOUT_TIME:-15} # Minutes
+
       # (OPTIONAL)
       # Usage: Comma-separated list of urls: http://localhost:port,http://internalip:port,https://base.proxy.tld,https://authprovider.domain.tld
       # ALLOWED_ORIGINS: ${DUMBTERM_ALLOWED_ORIGINS:-http://localhost:3000} # Comment out to allow all origins (*)
