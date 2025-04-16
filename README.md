@@ -126,13 +126,13 @@ docker compose up -d
 npm install
 ```
 
+> [!TIP]
 > Windows specific: 
-> - If you encounter issues with `node-pty`
-you may need to install
+> - If you encounter issues with `node-pty` you may need to install:
 > - `Node.js v16` (Look into [nvm for windows](https://github.com/coreybutler/nvm-windows) for multi node version support): `winget install CoreyButler.NVMforWindows`
 >   - with nvm installed use: `nvm install 16 && nvm use 16`
 > - `windows-build-tools` through Visual Studio Installer `MSVC v142 - VS 2019 C++ {arch} Build Tools`
->   - View the [official Microsoft documentation](https://github.com/microsoft/node-pty?tab=readme-ov-file#windows) for more details
+>   - Contact us or View the [official Microsoft documentation](https://github.com/microsoft/node-pty?tab=readme-ov-file#windows) for more details
 
 2. `cp .env.example .env` > Set environment variables in `.env`:
 ```bash
