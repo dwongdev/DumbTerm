@@ -11,7 +11,10 @@ A stupidly simple web-based terminal emulator, with common tools and Starship en
   - [Option 1: Docker](#option-1-docker-for-dummies)
   - [Option 2: Docker Compose](#option-2-docker-compose-for-dummies-who-like-customizing)
   - [Option 3: Running Locally](#option-3-running-locally-for-developers)
+    - [Windows-specific](#windows-specific)
 - [Configuration](#configuration)
+  - [Environment Variables](#environment-variables)
+  - [Starship usage](#starship-usage)
 - [Security](#security)
 - [Technical Details](#technical-details)
 - [Links](#links)
@@ -128,7 +131,7 @@ npm install
 ```
 
 > [!TIP]
-> Windows specific: 
+> #### Windows specific: 
 > - If you encounter issues with `node-pty` you can try using [Windows Subsystem for Linux (WSL)](https://learn.microsoft.com/en-us/windows/wsl/install) or may need to install:
 > - `Node.js v16` (Look into [nvm for windows](https://github.com/coreybutler/nvm-windows) for multi node version support):
 >   - `winget install CoreyButler.NVMforWindows`
@@ -167,7 +170,7 @@ npm start
 | LOCKOUT_TIME        | Custom Pin Lockout Time (in minutes)                        | 15                     | No       |
 | DEMO_MODE           | Enable demo mode with simulated terminal                    | false                  | No       |
 
-## Starship usage
+### Starship usage
 * Starship is a cross-shell prompt that provides a beautiful terminal experience.
 * It is enabled by default in the Docker image and is the recommended method.
 * To disable it, set `ENABLE_STARSHIP` to `false` in your environment variables.
