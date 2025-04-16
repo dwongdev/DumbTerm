@@ -179,21 +179,19 @@ npm start
 
 > [!TIP]
 > copy and paste one of the starship preset commands below into DumbTerm and that's it!
+<details>
+<summary><b>Example Preset Command:</b></summary>
+
+![preset-preview](https://github.com/user-attachments/assets/affdd780-5471-40de-adfd-9242feeec9da)
+</details>
+
+<br/>
 
 > [!WARNING]
 >  **Note:** If running locally, the preset commands will overwrite your existing `starship.toml` file. Make sure to back it up if needed.
 
-```bash
-
 <details>
-<summary>Example:</summary>
-
-![preset-preview](https://github.com/user-attachments/assets/affdd780-5471-40de-adfd-9242feeec9da)
-</details>
-<br/>
-
-<details>
-<summary>View All Starship Presets:</summary>
+<summary><b>View All Starship Presets:</b></summary>
 
 | Preset Name | Command | Preview |
 |-------------|---------|---------|
