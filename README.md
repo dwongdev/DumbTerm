@@ -58,6 +58,7 @@ DumbTerm includes the following XTerm.js addons to enhance your terminal experie
 
 * Docker (recommended)
 * Node.js >=20.0.0 (for local development)
+  * _Windows-specific_: [WSL or Node.js v16 - Option 3: Running Locally](#option-3-running-locally-for-developers)
 
 ### Option 1: Docker (For Dummies) - Recommended
 
@@ -128,7 +129,7 @@ npm install
 
 > [!TIP]
 > Windows specific: 
-> - If you encounter issues with `node-pty` you may need to install:
+> - If you encounter issues with `node-pty` you can try using [Windows Subsystem for Linux (WSL)](https://learn.microsoft.com/en-us/windows/wsl/install) or may need to install:
 > - `Node.js v16` (Look into [nvm for windows](https://github.com/coreybutler/nvm-windows) for multi node version support):
 >   - `winget install CoreyButler.NVMforWindows`
 >   - with nvm installed use: `nvm install 16 && nvm use 16`
@@ -225,7 +226,7 @@ We're dumb, but not stupid. Use a full-featured auth provider for production use
 
 * https://github.com/goauthentik/authentik
 * https://github.com/authelia/authelia
-* https://github.com/steveiliop56/tinyauth (Potentially will integrate with DumbTerm)
+* https://github.com/steveiliop56/tinyauth (Easy docker compose integration)
 
 ### Features
 
