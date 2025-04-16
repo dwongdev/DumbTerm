@@ -176,7 +176,15 @@ npm start
 ### 1. Use a preset configuration from starship.
 
 #### Starship Presets:
+
+> [!TIP]
 > copy and paste one of the starship preset commands below into DumbTerm and that's it!
+
+> [!WARNING]
+>  **Note:** If running locally, the preset commands will overwrite your existing `starship.toml` file. Make sure to back it up if needed.
+
+```bash
+
 <details>
 <summary>Example:</summary>
 
