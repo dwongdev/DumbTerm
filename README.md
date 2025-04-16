@@ -188,7 +188,7 @@ npm start
 <br/>
 
 > [!WARNING]
->  **Note:** If running locally, the preset commands will overwrite your existing `starship.toml` file. Make sure to back it up if needed.
+>  **Note:** If running locally or mapped volume to your actual `starship.toml` config, the preset commands will overwrite your existing `starship.toml` file. Make sure to back it up as needed.
 
 <details>
 <summary><b>View All Starship Presets:</b></summary>
