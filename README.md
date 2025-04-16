@@ -8,8 +8,8 @@ A stupidly simple web-based terminal emulator, with common tools and Starship en
 - [Features](#features)
 - [Quick Start](#quick-start)
   - [Prerequisites](#prerequisites)
-  - [Option 1: Docker](#option-1-docker-for-dummies)
-  - [Option 2: Docker Compose](#option-2-docker-compose-for-dummies-who-like-customizing)
+  - [Option 1: Docker (For Dummies)](#option-1-docker-for-dummies)
+  - [Option 2: Docker Compose (Recommended)](#option-2-docker-compose-for-dummies-who-like-customizing---recommended)
   - [Option 3: Running Locally](#option-3-running-locally-for-developers)
     - [Windows-specific](#windows-specific)
 - [Configuration](#configuration)
@@ -63,7 +63,7 @@ DumbTerm includes the following XTerm.js addons to enhance your terminal experie
 * Node.js >=20.0.0 (for local development)
   * _Windows-specific_: [WSL or Node.js v16 - Option 3: Running Locally](#option-3-running-locally-for-developers)
 
-### Option 1: Docker (For Dummies) - Recommended
+### Option 1: Docker (For Dummies)
 
 * Docker method uses a Debian Bullseye-based container with a pre-installed terminal environment.
 
@@ -86,7 +86,7 @@ docker run -p 3000:3000 \
 2. Enter your PIN if configured
 3. Enjoy your web-based terminal!
 
-### Option 2: Docker Compose (For Dummies who like customizing)
+### Option 2: Docker Compose (For Dummies who like customizing) - Recommended
 
 Create a `docker-compose.yml` file or use the provided one:
 
@@ -208,7 +208,7 @@ npm start
 | Tokyo Night `(DumbTerm Default with mods)` | `starship preset tokyo-night -o ~/.config/starship.toml` | ![Tokyo Night](https://starship.rs/presets/img/tokyo-night.png) |
 | Gruvbox Rainbow | `starship preset gruvbox-rainbow -o ~/.config/starship.toml` | ![Gruvbox Rainbow](https://starship.rs/presets/img/gruvbox-rainbow.png) |
 | Jetpack | `starship preset jetpack -o ~/.config/starship.toml` | ![Jetpack](https://starship.rs/presets/img/jetpack.png) |
-| No Nerd Fonts | `starship preset no-nerd-font -o ~/.config/starship.toml` | N/A |
+| No Nerd Fonts | `starship preset no-nerd-font -o ~/.config/starship.toml` | n/a |
 </details>
 
 - You can also view the available presets by running `starship preset -l` in DumbTerm.
@@ -309,7 +309,6 @@ Made with ❤️ by DumbWare.io & [gitmotion](https://github.com/gitmotion)
 
 ## Future Features
 
-* tinyauth integration
 * Persistent terminal history
 
 > Got an idea? Open an issue or submit a PR
