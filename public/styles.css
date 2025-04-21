@@ -410,21 +410,51 @@ h2 {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    height: 36px;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    height: 42px;
+    position: relative;
 }
 
-.terminal-tabs::-webkit-scrollbar {
+/* Show scrollbar only when needed */
+.tab-list::-webkit-scrollbar {
+    height: 6px;
+    display: block;
+}
+
+.tab-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.tab-list::-webkit-scrollbar-thumb {
+    background: var(--terminal-border);
+    border-radius: 3px;
+}
+
+.tab-list::-webkit-scrollbar-thumb:hover {
+    background: var(--primary);
+}
+
+/* Firefox scrollbar */
+.tab-list {
+    scrollbar-width: thin;
+    scrollbar-color: var(--terminal-border) transparent;
+}
+
+/* Hide scrollbar when not needed (no overflow) */
+.tab-list.no-scroll::-webkit-scrollbar {
     display: none;
+}
+.tab-list.no-scroll {
+    scrollbar-width: none;
 }
 
 .tab-list {
     display: flex;
+    align-items: center; /* Ensure tabs are centered vertically */
     gap: 0.25rem;
     flex: 1;
     min-width: 0;
+    overflow-x: auto;
+    padding-bottom: 6px; /* Space for scrollbar */
 }
 
 .terminal-tab {
@@ -442,7 +472,7 @@ h2 {
     transition: all var(--transition);
     min-width: 120px;
     max-width: 250px;
-    /* Make sure the tab can be double-clicked for renaming */
+    height: 28px; /* Match the height of the add button */
     user-select: none;
     position: relative; /* Added to ensure proper positioning of the tooltip */
 }
@@ -520,27 +550,6 @@ h2 {
     transform: rotate(-45deg) scale(1.2);
 }
 
-.terminal-tab:hover::after {
-    content: "Double-click to rename";
-    position: absolute;
-    bottom: -25px;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: var(--tooltip-bg);
-    color: var(--tooltip-text);
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    opacity: 0;
-    transition: opacity 0.2s;
-    pointer-events: none;
-    z-index: 1000;
-}
-
-.terminal-tab:hover:not(:active)::after {
-    opacity: 0.9;
-}
-
 .new-tab-button {
     background: var(--btn-default);
     color: var(--terminal-text);
@@ -558,6 +567,7 @@ h2 {
     margin-right: 8px;
     transition: all var(--transition);
     flex-shrink: 0;
+    align-self: center; /* Ensure button is centered vertically */
 }
 
 .new-tab-button:hover {
@@ -570,8 +580,10 @@ h2 {
     position: relative;
     flex: 1;
     min-height: 0;
-    height: 100%;
-    margin-top: 0.5rem;
+    height: calc(100% - 8px); /* Adjust for the margin we added */
+    margin-top: 0;
+    border-radius: 12px; /* Round all corners */
+    overflow: hidden;
 }
 
 .terminals-container > div {
@@ -623,10 +635,22 @@ h2 {
     font-size: inherit;
     font-family: inherit;
     width: 100%;
-    max-width: 200px; /* Increased from 150px */
+    max-width: 200px;
     padding: 0 2px;
     margin: 0;
     border-bottom: 1px solid var(--accent-color);
+}
+
+/* Tabs container styling */
+.tabs-container {
+    background: var(--terminal-bg);
+    border-radius: 12px; /* Rounded corners all around */
+    padding: 8px 12px 2px;
+    border: 1px solid var(--terminal-border);
+    margin-bottom: 0.5rem; /* Add space between tabs and terminal */
+    position: relative;
+    z-index: 5;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Slight shadow for depth */
 }
 
 /* Responsive adjustments */

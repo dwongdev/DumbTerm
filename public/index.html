@@ -52,10 +52,13 @@
                 </svg>
             </button>
             <h1 id="siteTitle">DumbTerm</h1>
-            <div class="terminal-tabs">
-                <button class="new-tab-button" aria-label="New terminal" data-tooltip="New ({shortcut})" data-shortcuts='{"win": "ctrl+alt+t", "mac": "ctrl+cmd+t"}'>+</button>
-                <div class="tab-list">
-                    <!-- Tabs will be added here dynamically -->
+            <!-- Added a styled container for tabs and new tab button -->
+            <div class="tabs-container">
+                <div class="terminal-tabs">
+                    <button class="new-tab-button" aria-label="New terminal" data-tooltip="New ({shortcut})" data-shortcuts='{"win": "ctrl+alt+t", "mac": "ctrl+cmd+t"}'>+</button>
+                    <div class="tab-list">
+                        <!-- Tabs will be added here dynamically -->
+                    </div>
                 </div>
             </div>
             <div class="terminals-container">

@@ -11,12 +11,16 @@ export default class TerminalManager {
         this.handleTabClick = this.handleTabClick.bind(this);
         this.handleTabClose = this.handleTabClose.bind(this);
         this.handleTabRename = this.handleTabRename.bind(this);
+        this.checkTabOverflow = this.checkTabOverflow.bind(this);
         
         // Set up event listeners
         const newTabButton = document.querySelector('.new-tab-button');
         if (newTabButton) {
             newTabButton.addEventListener('click', this.handleNewTab);
         }
+
+        // Add overflow detection for tabs
+        this.initTabOverflowHandling();
 
         // Add keyboard shortcuts
         document.addEventListener('keydown', (e) => {
@@ -62,13 +66,54 @@ export default class TerminalManager {
         });
     }
 
+    // Initialize tab overflow handling
+    initTabOverflowHandling() {
+        // Initial check
+        this.checkTabOverflow();
+        
+        // Check on window resize
+        window.addEventListener('resize', this.checkTabOverflow);
+        
+        // Add scroll event listener to tab list
+        const tabList = document.querySelector('.tab-list');
+        if (tabList) {
+            // Monitor tab list for overflow changes using ResizeObserver
+            if (typeof ResizeObserver !== 'undefined') {
+                const resizeObserver = new ResizeObserver(entries => {
+                    this.checkTabOverflow();
+                });
+                resizeObserver.observe(tabList);
+            }
+            
+            // Also check on scroll events
+            tabList.addEventListener('scroll', () => {
+                // Update scroll indicators if needed
+            });
+        }
+    }
+    
+    // Check if tabs are overflowing their container
+    checkTabOverflow() {
+        const tabList = document.querySelector('.tab-list');
+        if (!tabList) return;
+        
+        // Check if tabs overflow horizontally
+        const hasOverflow = tabList.scrollWidth > tabList.clientWidth;
+        
+        // Toggle the no-scroll class based on overflow status
+        tabList.classList.toggle('no-scroll', !hasOverflow);
+    }
+
     createTab(id) {
         const tabList = document.querySelector('.tab-list');
         const tab = document.createElement('div');
         tab.className = 'terminal-tab';
         tab.dataset.tabId = id;
+        
+        // Add tooltip for double-click rename functionality
+        tab.setAttribute('data-tooltip', 'Double-click to rename ({shortcut})');
+        tab.setAttribute('data-shortcuts', JSON.stringify({"win": "ctrl+alt+r", "mac": "ctrl+cmd+r"}));
 
-        const closeShortcut = this.isMacOS ? 'ctrl+cmd+w' : 'ctrl+alt+w';
         tab.innerHTML = `
             <span>Term${id + 1}</span>
             <button class="close-tab" aria-label="Close terminal" data-tooltip="Close ({shortcut})" data-shortcuts='{"win": "ctrl+alt+w", "mac": "ctrl+cmd+w"}'></button>
@@ -88,7 +133,8 @@ export default class TerminalManager {
 
         
         tabList.appendChild(tab);
-        this.setupToolTips(document.querySelectorAll(".close-tab"));
+        // Apply tooltips to both the tab itself and its close button
+        this.setupToolTips(document.querySelectorAll(".close-tab, .terminal-tab"));
         return tab;
     }
 
@@ -107,6 +153,9 @@ export default class TerminalManager {
         
         this.terminals.set(id, { tab, container, terminal });
         this.activateTab(id);
+        
+        // Check if tabs overflow after adding a new tab
+        this.checkTabOverflow();
     }
 
     handleTabClick(id) {
@@ -140,6 +189,9 @@ export default class TerminalManager {
             this.tabCounter = 0; // Reset counter so the next tab will be Term1
             this.handleNewTab();
         }
+        
+        // After closing a tab, check overflow status
+        this.checkTabOverflow();
     }
 
     handleTabRename(id) {
