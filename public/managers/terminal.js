@@ -10,6 +10,7 @@ export default class TerminalManager {
         this.handleNewTab = this.handleNewTab.bind(this);
         this.handleTabClick = this.handleTabClick.bind(this);
         this.handleTabClose = this.handleTabClose.bind(this);
+        this.handleTabRename = this.handleTabRename.bind(this);
         
         // Set up event listeners
         const newTabButton = document.querySelector('.new-tab-button');
@@ -51,6 +52,13 @@ export default class TerminalManager {
                     this.activateTab(tabIds[tabIndex]);
                 }
             }
+            // Command/Control + R: Rename active tab
+            else if (modifier && e.key === 'r') {
+                e.preventDefault();
+                if (this.activeTabId !== null) {
+                    this.handleTabRename(this.activeTabId);
+                }
+            }
         });
     }
 
@@ -67,6 +75,12 @@ export default class TerminalManager {
         `;
         
         tab.addEventListener('click', () => this.handleTabClick(id));
+        tab.addEventListener('dblclick', (e) => {
+            // Don't trigger rename if clicking on the close button
+            if (!e.target.closest('.close-tab')) {
+                this.handleTabRename(id);
+            }
+        });
         tab.querySelector('.close-tab').addEventListener('click', (e) => {
             e.stopPropagation();
             this.handleTabClose(id);
@@ -126,6 +140,40 @@ export default class TerminalManager {
             this.tabCounter = 0; // Reset counter so the next tab will be Term1
             this.handleNewTab();
         }
+    }
+
+    handleTabRename(id) {
+        const terminal = this.terminals.get(id);
+        if (!terminal) return;
+
+        const tab = terminal.tab;
+        const span = tab.querySelector('span');
+        const currentName = span.textContent;
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = currentName;
+        input.className = 'rename-input';
+
+        span.replaceWith(input);
+        input.focus();
+
+        const finishRename = () => {
+            const newName = input.value.trim() || currentName;
+            const newSpan = document.createElement('span');
+            newSpan.textContent = newName;
+            input.replaceWith(newSpan);
+        };
+
+        input.addEventListener('blur', finishRename);
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                finishRename();
+            } else if (e.key === 'Escape') {
+                input.value = currentName;
+                finishRename();
+            }
+        });
     }
 
     getNextTab(currentId) {

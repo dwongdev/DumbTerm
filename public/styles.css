@@ -42,6 +42,9 @@
     --terminal-border: rgba(0, 0, 0, 0.1);
     --btn-default:rgba(231, 229, 229, 0.5);
     --terminal-font: 'JetBrainsMono Nerd Font', Menlo, Monaco, 'Courier New', monospace;
+    --tooltip-bg: rgba(0, 0, 0, 0.7);
+    --tooltip-text: #fff;
+    --accent-color: var(--primary);
 }
 
 [data-theme="dark"] {
@@ -58,6 +61,9 @@
     --terminal-selection: rgba(33, 149, 243, 0.2);
     --terminal-border: rgba(255, 255, 255, 0.1);
     --btn-default:rgba(231, 229, 229, 0.3);
+    --tooltip-bg: rgba(255, 255, 255, 0.85);
+    --tooltip-text: #333;
+    --accent-color: var(--primary);
 }
 
 /* Base styles */
@@ -435,7 +441,18 @@ h2 {
     white-space: nowrap;
     transition: all var(--transition);
     min-width: 120px;
-    max-width: 200px;
+    max-width: 250px;
+    /* Make sure the tab can be double-clicked for renaming */
+    user-select: none;
+    position: relative; /* Added to ensure proper positioning of the tooltip */
+}
+
+/* Add this to handle text overflow */
+.terminal-tab span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
 }
 
 .terminal-tab.active {
@@ -501,6 +518,27 @@ h2 {
 
 .terminal-tab .close-tab:hover::after {
     transform: rotate(-45deg) scale(1.2);
+}
+
+.terminal-tab:hover::after {
+    content: "Double-click to rename";
+    position: absolute;
+    bottom: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--tooltip-bg);
+    color: var(--tooltip-text);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.terminal-tab:hover:not(:active)::after {
+    opacity: 0.9;
 }
 
 .new-tab-button {
@@ -574,6 +612,21 @@ h2 {
 
 .xterm-link-layer > div {
     pointer-events: auto;
+}
+
+/* Tab renaming styles */
+.rename-input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: inherit;
+    font-size: inherit;
+    font-family: inherit;
+    width: 100%;
+    max-width: 200px; /* Increased from 150px */
+    padding: 0 2px;
+    margin: 0;
+    border-bottom: 1px solid var(--accent-color);
 }
 
 /* Responsive adjustments */
