@@ -348,6 +348,7 @@ export default class TerminalManager {
             console.warn('Ligatures addon could not be loaded:', e);
         }
 
+        // Initial fit
         fitAddon.fit();
 
         // Add search functionality with Ctrl+Alt+F or Cmd+Alt+F
@@ -569,7 +570,7 @@ export default class TerminalManager {
         window.addEventListener('resize', () => {
             // Delay the resize slightly to ensure container dimensions are settled
             setTimeout(() => {
-                // First fit the terminal to its container
+                // Let FitAddon handle terminal sizing properly
                 fitAddon.fit();
                 
                 // Ensure terminal size is updated after resize
@@ -579,21 +580,6 @@ export default class TerminalManager {
                         cols: terminal.cols,
                         rows: terminal.rows
                     }));
-                }
-                
-                // Fix canvas dimensions to match container size
-                const containerElement = container.querySelector('.xterm-screen');
-                const canvasElements = container.querySelectorAll('canvas');
-                
-                if (containerElement && canvasElements.length) {
-                    const containerWidth = containerElement.clientWidth;
-                    const containerHeight = containerElement.clientHeight;
-                    
-                    canvasElements.forEach(canvas => {
-                        // Set canvas dimensions to match container
-                        canvas.style.width = `${containerWidth}px`;
-                        canvas.style.height = `${containerHeight}px`;
-                    });
                 }
             }, 50); // Small delay to ensure container dimensions are settled
         });
