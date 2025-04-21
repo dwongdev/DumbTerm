@@ -567,15 +567,35 @@ export default class TerminalManager {
 
         // Handle window resize
         window.addEventListener('resize', () => {
-            fitAddon.fit();
-            // Ensure terminal size is updated after resize
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({
-                    type: 'resize',
-                    cols: terminal.cols,
-                    rows: terminal.rows
-                }));
-            }
+            // Delay the resize slightly to ensure container dimensions are settled
+            setTimeout(() => {
+                // First fit the terminal to its container
+                fitAddon.fit();
+                
+                // Ensure terminal size is updated after resize
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({
+                        type: 'resize',
+                        cols: terminal.cols,
+                        rows: terminal.rows
+                    }));
+                }
+                
+                // Fix canvas dimensions to match container size
+                const containerElement = container.querySelector('.xterm-screen');
+                const canvasElements = container.querySelectorAll('canvas');
+                
+                if (containerElement && canvasElements.length) {
+                    const containerWidth = containerElement.clientWidth;
+                    const containerHeight = containerElement.clientHeight;
+                    
+                    canvasElements.forEach(canvas => {
+                        // Set canvas dimensions to match container
+                        canvas.style.width = `${containerWidth}px`;
+                        canvas.style.height = `${containerHeight}px`;
+                    });
+                }
+            }, 50); // Small delay to ensure container dimensions are settled
         });
 
         // Clean up on page unload
