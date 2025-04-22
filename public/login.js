@@ -115,14 +115,20 @@ document.addEventListener('DOMContentLoaded', () => {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ pin })
+            body: JSON.stringify({ pin }),
+            credentials: 'same-origin', // Ensure cookies are sent
+            redirect: 'follow' // Follow server redirects
         })
         .then(async response => {
+            // If redirected, the response will be a redirect status (3xx)
+            if (response.redirected) {
+                window.location.replace(response.url);
+                return;
+            }
+            
             const data = await response.json();
             
-            if (response.ok) {
-                window.location.href = joinPath('');
-            } else if (response.status === 429) {
+            if (response.status === 429) {
                 // Handle lockout
                 errorElement.textContent = data.error;
                 errorElement.setAttribute('aria-hidden', 'false');

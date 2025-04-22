@@ -117,6 +117,23 @@ main {
     overflow: hidden;
 }
 
+.header-right {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    color: var(--text-color);
+    border-radius: 8px;
+    transition: var(--input-element-transition);
+    font-size: 1.5rem;
+}
+
 #terminal {
     flex: 1;
     padding: 0.75rem;
@@ -181,8 +198,8 @@ form {
 }
 
 /* Theme toggle */
-#themeToggle {
-    position: absolute;
+#themeToggle, #logoutBtn {
+    /* position: absolute; */
     top: 1rem;
     right: 1rem;
     background: none;
@@ -198,11 +215,11 @@ form {
     transition: background-color var(--transition);
 }
 
-#themeToggle:hover {
+#themeToggle:hover, #logoutBtn:hover {
     background: rgba(128, 128, 128, 0.1);
 }
 
-#themeToggle svg {
+#themeToggle svg, #logoutBtn svg {
     width: 24px;
     height: 24px;
     stroke: var(--text);
@@ -598,7 +615,7 @@ h2 {
     height: 28px;
     display: flex;
     position: relative;
-    bottom: 4px;
+    bottom: 3px;
     align-items: center;
     justify-content: center;
     cursor: pointer;
@@ -692,6 +709,89 @@ h2 {
     position: relative;
     z-index: 5;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Slight shadow for depth */
+}
+
+/* Update notification styling */
+.update-notification {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: var(--container);
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    border-left: 4px solid var(--primary);
+    max-width: 300px;
+    animation: slideInNotification 0.3s ease forwards;
+}
+
+.update-notification.error {
+    border-left-color: #ff4444;
+}
+
+.update-notification.error button {
+    background: var(--secondary-color);
+    color: var(--text);
+}
+
+@keyframes slideInNotification {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.update-notification p {
+    margin: 0;
+    font-weight: 500;
+}
+
+.update-notification button {
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.update-notification button:hover {
+    background: var(--primary-hover);
+}
+
+.update-notification button:disabled {
+    opacity: 0.7;
+    cursor: wait;
+}
+
+.update-notification button.secondary {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+}
+
+.update-notification button.secondary:hover {
+    background: var(--btn-default);
+}
+
+/* Responsive adjustments for update notification */
+@media (max-width: 600px) {
+    .update-notification {
+        bottom: 1rem;
+        right: 1rem;
+        left: 1rem;
+        max-width: none;
+    }
 }
 
 /* Responsive adjustments */

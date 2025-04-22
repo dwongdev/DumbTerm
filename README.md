@@ -2,10 +2,11 @@
 
 A stupidly simple web-based terminal emulator, with common tools and Starship enabled! 🚀
 
-![dumbterm-preview](https://github.com/user-attachments/assets/46d4f035-9675-4fc3-9493-b6c896d53911)
+![dumbterm-preview](https://github.com/user-attachments/assets/12f2174e-d8ae-4330-91a0-da211d784583)
 
 ## Table of Contents
 - [Features](#features)
+- [Supported XTerm Addons](#supported-xterm-addons)
 - [Quick Start](#quick-start)
   - [Prerequisites](#prerequisites)
   - [Option 1: Docker (For Dummies)](#option-1-docker-for-dummies)
@@ -15,10 +16,19 @@ A stupidly simple web-based terminal emulator, with common tools and Starship en
 - [Configuration](#configuration)
   - [Environment Variables](#environment-variables)
   - [Starship usage](#starship-usage)
+    - [Starship Presets](#starship-presets)
+- [Keyboard Shortcuts](#keyboard-shortcuts)
+  - [Terminal Search](#terminal-search)
+  - [Tab Management](#tab-management)
 - [Security](#security)
+  - [Features](#features-1)
 - [Technical Details](#technical-details)
+  - [Stack](#stack)
+  - [Dependencies](#dependencies)
+- [Usage](#usage)
 - [Links](#links)
 - [Contributing](#contributing)
+- [Check Us Out](#-check-us-out)
 - [Future Features](#future-features)
 
 ## Features
@@ -33,7 +43,12 @@ A stupidly simple web-based terminal emulator, with common tools and Starship en
 - 🔍 Terminal search functionality (`ctrl+f` or `cmd+f`)
 - 📂 Custom volume mappings
 - 🔗 In-terminal hyperlinks
-- ⌨️ Keyboard shortcuts for common actions (hover tooltips)
+- ⌨️ Keyboard shortcuts for common actions
+- 📑 Tab Management:
+  - Drag and drop reordering of tabs
+  - Double-click to rename tabs
+  - Direct tab selection with shortcuts
+  - Terminal history persistence across sessions
 - 📱 PWA Support for mobile and desktop
 - ⚡ XTerm.js for fast terminal rendering
 
@@ -79,6 +94,7 @@ docker run -p 3000:3000 \
   -e ENABLE_STARSHIP=true \
   -e TZ=America/Los_Angeles \
   -e LOCKOUT_TIME=15 \
+  -e MAX_SESSION_AGE=24 \
   dumbwareio/dumbterm:latest
 ```
 
@@ -112,6 +128,8 @@ services:
       BASE_URL: ${DUMBTERM_BASE_URL:-http://localhost:3000}
       ENABLE_STARSHIP: ${ENABLE_STARSHIP:-true}
       LOCKOUT_TIME: ${DUMBTERM_LOCKOUT_TIME:-15} # Minutes
+      # Session duration in hours before requiring re-authentication
+      MAX_SESSION_AGE: ${DUMBTERM_MAX_SESSION_AGE:-24} # Hours
       # (OPTIONAL) - List of allowed origins for CORS
       # ALLOWED_ORIGINS: ${DUMBTERM_ALLOWED_ORIGINS:-http://localhost:3000}
 ```
@@ -159,7 +177,7 @@ npm start
 | Variable            | Description                                                 | Default                | Required |
 |---------------------|-------------------------------------------------------------|------------------------|----------|
 | PORT                | Server port                                                 | 3000                   | No       |
-| BASE_URL            | Base URL for the application                                | http://localhost:PORT  | Yes      |
+| BASE_URL            | Base URL for the application                                | http://localhost:PORT  | No      |
 | DUMBTERM_PIN        | PIN protection (numeric)                                    | None                   | No       |
 | SITE_TITLE          | Site title displayed in header                              | DumbTerm               | No       |
 | TZ                  | Container timezone                                          | America/Los_Angeles    | No       |
@@ -168,6 +186,7 @@ npm start
 | ALLOWED_ORIGINS     | Allowed CORS origins (comma-separated list)                 | * (all origins)        | No       |
 | DEBUG               | Enable debug logging                                        | FALSE                  | No       |
 | LOCKOUT_TIME        | Custom Pin Lockout Time (in minutes)                        | 15                     | No       |
+| MAX_SESSION_AGE     | Duration of authenticated session (in hours)                | 24                     | No       |
 | DEMO_MODE           | Enable demo mode with simulated terminal                    | false                  | No       |
 
 ### Starship usage
@@ -226,6 +245,33 @@ For more details, visit the [Starship Presets page](https://starship.rs/presets/
   - Meaning if you already have starship enabled locally, you should be able to see your current styles accordingly.
 - You must install Starship on your local machine if you wish to use DumbTerm with starship _locally_.
   - To install Starship, follow the instructions on the [Starship installation page](https://starship.rs/installing/).
+
+## Keyboard Shortcuts
+
+DumbTerm provides a comprehensive set of keyboard shortcuts for efficient terminal management. The modifier keys vary by operating system:
+- Windows/Linux: `Ctrl+Alt+{key}`
+- macOS: `Ctrl+Cmd+{key}`
+
+| Action | Windows/Linux | macOS |
+|--------|--------------|-------|
+| New Terminal | `Ctrl+Alt+T` | `Ctrl+Cmd+T` |
+| Close Terminal | `Ctrl+Alt+W` | `Ctrl+Cmd+W` |
+| Rename Terminal | `Ctrl+Alt+R` | `Ctrl+Cmd+R` |
+| Search in Terminal | `Ctrl+F` | `Cmd+F` |
+| Next Terminal | `Ctrl+Alt+>` or `Ctrl+Alt+.` | `Ctrl+Cmd+>` or `Ctrl+Cmd+.` |
+| Previous Terminal | `Ctrl+Alt+<` or `Ctrl+Alt+,` | `Ctrl+Cmd+<` or `Ctrl+Cmd+,` |
+| Switch to Terminal 1-9 | `Ctrl+Alt+[1-9]` | `Ctrl+Cmd+[1-9]` |
+
+### Terminal Search
+- Press `Ctrl+F` (Windows/Linux) or `Cmd+F` (macOS) to open the search bar
+- Use Up/Down arrow buttons or Enter/Shift+Enter to cycle through matches
+- Press Escape or the close button to exit search mode
+
+### Tab Management
+- **Drag and Drop**: Click and drag tabs to reorder them
+- **Rename**: Double-click a tab or use the keyboard shortcut to rename it
+- **History**: Terminal content is automatically preserved across browser refreshes and restarts
+- **Direct Selection**: Use number shortcuts (1-9) to quickly switch between the first 9 terminals
 
 ## Security
 
@@ -308,7 +354,5 @@ Made with ❤️ by DumbWare.io & [gitmotion](https://github.com/gitmotion)
 - **Join the Chaos:** [Discord](https://discord.gg/zJutzxWyq2) 💬
 
 ## Future Features
-
-* Persistent terminal history
 
 > Got an idea? Open an issue or submit a PR
