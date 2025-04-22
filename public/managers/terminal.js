@@ -1,5 +1,13 @@
 import StorageManager from './storage.js';
 
+// Helper function to join paths with base path
+function joinPath(path) {
+    const basePath = window.appConfig?.basePath || '';
+    const cleanPath = path.replace(/^\/+/, '');
+    const cleanBase = basePath.replace(/\/+$/, '');
+    return cleanBase ? `${cleanBase}/${cleanPath}` : cleanPath;
+}
+
 export default class TerminalManager {
     constructor(isMacOS, setupToolTips) {
         this.terminals = new Map();
@@ -776,6 +784,17 @@ export default class TerminalManager {
         }
 
         function handleReconnect(event) {
+            // Handle authentication failure (code 1008 is policy violation)
+            if (event && event.code === 1008) {
+                terminal.writeln('\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n');
+                terminal.writeln('\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n');
+                terminal.writeln('\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n');
+                terminal.writeln('\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n');
+                terminal.writeln('Authentication required. Redirecting to login...');
+                window.location.href = joinPath('login');
+                return;
+            }
+
             if (event && event.wasClean) {
                 terminal.writeln('\r\nConnection closed normally.');
                 return;

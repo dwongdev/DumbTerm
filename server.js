@@ -71,6 +71,7 @@ if (!PIN || PIN.trim() === '') {
 const loginAttempts = new Map();
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_TIME = (process.env.LOCKOUT_TIME || 15) * 60 * 1000; // default 15 minutes in milliseconds
+const MAX_SESSION_AGE = (process.env.MAX_SESSION_AGE || 24) * 60 * 60 * 1000 // default 24 hours
 
 function resetAttempts(ip) {
     debugLog('Resetting login attempts for IP:', ip);
@@ -112,10 +113,10 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: (BASE_URL.startsWith('https') && process.env.NODE_ENV === 'production'),
+        secure: (BASE_URL.startsWith('https') && NODE_ENV === 'production'),
         httpOnly: true,
         sameSite: 'strict',
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+        maxAge: MAX_SESSION_AGE
     }
 }));
 
@@ -157,13 +158,23 @@ const authMiddleware = (req, res, next) => {
         return next();
     }
 
-    // Check if user is authenticated via session
-    if (!req.session.authenticated) {
-        debugLog('Auth failed - No valid session, redirecting to login');
-        return res.redirect(BASE_PATH + '/login');
+    // First check if user is authenticated via session
+    if (req.session.authenticated) {
+        debugLog('Auth successful - Valid session found');
+        return next();
     }
-    debugLog('Auth successful - Valid session found');
-    next();
+
+    // If not authenticated via session, check for valid PIN cookie
+    const pinCookie = req.cookies[`${projectName}_PIN`];
+    if (pinCookie && verifyPin(PIN, pinCookie)) {
+        debugLog('Auth successful - Valid PIN cookie found, restoring session');
+        req.session.authenticated = true;
+        return next();
+    }
+
+    // No valid session or PIN cookie found
+    debugLog('Auth failed - No valid session or PIN cookie, redirecting to login');
+    return res.redirect(BASE_PATH + '/login');
 };
 
 app.get(BASE_PATH + '/', [originValidationMiddleware, authMiddleware], (req, res) => {
@@ -260,12 +271,13 @@ app.post(BASE_PATH + '/verify-pin', (req, res) => {
             // Set secure cookie
             res.cookie(`${projectName}_PIN`, pin, {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
+                secure: req.secure || (BASE_URL.startsWith('https') && NODE_ENV === 'production'),
                 sameSite: 'strict',
-                maxAge: 24 * 60 * 60 * 1000 // 24 hours
+                maxAge: MAX_SESSION_AGE
             });
             
-            res.status(200).json({ success: true });
+            // Redirect to main page on success
+            res.redirect(BASE_PATH + '/');
         } else {
             debugLog('PIN verification failed - Invalid PIN');
             // Record failed attempt
@@ -280,6 +292,22 @@ app.post(BASE_PATH + '/verify-pin', (req, res) => {
             });
         }
     }, delay);
+});
+
+app.get(BASE_PATH + '/api/require-pin', (req, res) => {
+    // If no PIN is set, return success
+    if (!PIN || PIN.trim() === '') {
+        return res.json({ success: true, required: false });
+    }
+
+    // Check for PIN cookie
+    const pinCookie = req.cookies[`${projectName}_PIN`];
+    if (!pinCookie || !verifyPin(PIN, pinCookie)) {
+        return res.json({ success: false, required: true });
+    }
+
+    // Valid PIN cookie found
+    return res.json({ success: true, required: true });
 });
 
 // WebSocket server configuration
@@ -325,7 +353,7 @@ wss.on('connection', (ws, req) => {
 
     if (!req.headers.cookie) {
         debugLog('No cookies found, closing connection');
-        ws.close();
+        ws.close(1008, 'Authentication required'); // Use 1008 for policy violation
         return;
     }
 
@@ -336,12 +364,11 @@ wss.on('connection', (ws, req) => {
         parsedCookies[parts[0].trim()] = parts[1].trim();
     });
 
-
     // Check if the user has the correct PIN cookie
     const pinCookie = parsedCookies[`${projectName}_PIN`];
     if (!pinCookie || !verifyPin(PIN, pinCookie)) {
         debugLog('Invalid PIN cookie, closing connection');
-        ws.close();
+        ws.close(1008, 'Authentication required'); // Use 1008 for policy violation
         return;
     }
 
@@ -387,8 +414,8 @@ function createTerminal(ws) {
             ...process.env,
             TERM: 'xterm-256color',
             COLORTERM: 'truecolor',
-            // LANG: 'en_US.UTF-8',
-            // LC_ALL: 'en_US.UTF-8'
+            LANG: 'en_US.UTF-8',
+            LC_ALL: 'en_US.UTF-8'
         }
     });
 
@@ -453,9 +480,9 @@ server.listen(PORT, () => {
         port: PORT,
         basePath: BASE_PATH,
         pinProtection: !!PIN,
-        nodeEnv: process.env.NODE_ENV || 'development',
+        nodeEnv: NODE_ENV,
         debug: DEBUG,
         demoMode: DEMO_MODE
     });
-    console.log(`Server running on port ${PORT}`);
+    console.log(`Server running on port ${BASE_URL}`);
 });

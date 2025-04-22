@@ -17,6 +17,10 @@ function getAssetPath(url) {
 async function checkCacheVersion() {
     const keys = await caches.keys();
     
+    // Find any existing DumbTerm cache
+    const existingCache = keys.find(key => key.startsWith('DUMBTERM_PWA_CACHE'));
+    const existingVersion = existingCache ? existingCache.split('V')[1] : null;
+    
     // Check if current version cache exists
     const currentCacheExists = keys.includes(CACHE_NAME);
     
@@ -27,24 +31,56 @@ async function checkCacheVersion() {
     return {
         currentCacheExists,
         hasOldVersions,
-        oldCaches
+        oldCaches,
+        existingVersion
     };
+}
+
+// Function to notify clients about version status
+async function notifyClients() {
+    const { existingVersion } = await checkCacheVersion();
+    if (existingVersion !== CACHE_VERSION) {
+        self.clients.matchAll().then(clients => {
+            clients.forEach(client => {
+                client.postMessage({
+                    type: 'UPDATE_AVAILABLE',
+                    currentVersion: existingVersion,
+                    newVersion: CACHE_VERSION
+                });
+            });
+        });
+    }
 }
 
 const preload = async () => {
     console.log("Preparing to install web app cache");
     
     // Check cache status
-    const { currentCacheExists, hasOldVersions } = await checkCacheVersion();
+    const { currentCacheExists, existingVersion } = await checkCacheVersion();
     
     // If current version cache already exists, no need to reinstall
     if (currentCacheExists) {
         console.log(`Cache ${CACHE_NAME} already exists, using existing cache`);
+        await notifyClients(); // Still check if we need to notify about updates
         return;
     }
     
-    // If we get here, we need to install the cache
-    console.log(`Cache ${CACHE_NAME} does not exist, installing cache`);
+    // If we have an older version, notify clients but don't update yet
+    if (existingVersion && existingVersion !== CACHE_VERSION) {
+        console.log(`New version ${CACHE_VERSION} available (current: ${existingVersion})`);
+        await notifyClients();
+        return;
+    }
+    
+    // If no cache exists at all, do initial installation
+    if (!existingVersion) {
+        await installCache();
+    }
+};
+
+// Function to install or update the cache
+async function installCache() {
+    console.log(`Installing/updating cache to version ${CACHE_VERSION}`);
     const cache = await caches.open(CACHE_NAME);
     
     try {
@@ -78,55 +114,59 @@ const preload = async () => {
         console.log("Assets to cache:", ASSETS_TO_CACHE);
         await cache.addAll(ASSETS_TO_CACHE);
         console.log("Assets cached successfully");
+        
+        // Clear old caches after successful installation
+        const { oldCaches } = await checkCacheVersion();
+        await Promise.all(
+            oldCaches.map(key => {
+                console.log(`Deleting old cache: ${key}`);
+                return caches.delete(key);
+            })
+        );
+
+        // Notify clients of successful update
+        self.clients.matchAll().then(clients => {
+            clients.forEach(client => {
+                client.postMessage({
+                    type: 'UPDATE_COMPLETE',
+                    version: CACHE_VERSION,
+                    success: true
+                });
+            });
+        });
     } catch (error) {
         console.error("Failed to cache assets:", error);
+        // Notify clients of failed update
+        self.clients.matchAll().then(clients => {
+            clients.forEach(client => {
+                client.postMessage({
+                    type: 'UPDATE_COMPLETE',
+                    version: CACHE_VERSION,
+                    success: false,
+                    error: error.message
+                });
+            });
+        });
     }
-};
-
-// Clean up old caches
-async function clearOldCaches() {
-    const { oldCaches } = await checkCacheVersion();
-    
-    if (oldCaches.length > 0) {
-        console.log('Found old caches to delete:', oldCaches);
-    }
-    
-    return Promise.all(
-        oldCaches.map(key => {
-            console.log(`Deleting old cache: ${key}`);
-            return caches.delete(key);
-        })
-    );
 }
 
 self.addEventListener("install", (event) => {
     console.log("Service Worker installing...");
-    event.waitUntil(preload());
-    // Skip waiting to allow new service worker to activate immediately
-    self.skipWaiting();
+    event.waitUntil(
+        Promise.all([
+            preload(),
+            self.skipWaiting() // Skip waiting to allow new service worker to activate immediately
+        ])
+    );
 });
 
 self.addEventListener("activate", (event) => {
     console.log("Service Worker activating...");
-    
     event.waitUntil(
-        checkCacheVersion().then(({currentCacheExists, hasOldVersions}) => {
-            return Promise.all([
-                clearOldCaches(),
-                self.clients.claim() // Take control of all clients immediately
-            ]).then(() => {
-                // Notify clients of the current version
-                return self.clients.matchAll().then(clients => {
-                    clients.forEach(client => {
-                        // Only send update notification if we actually updated (had old versions)
-                        client.postMessage({
-                            type: hasOldVersions ? 'UPDATE_AVAILABLE' : 'SW_VERSION',
-                            version: CACHE_VERSION
-                        });
-                    });
-                });
-            });
-        })
+        Promise.all([
+            self.clients.claim(), // Take control of all clients immediately
+            notifyClients() // Check version and notify clients immediately
+        ])
     );
 });
 
@@ -172,23 +212,27 @@ self.addEventListener("fetch", (event) => {
 });
 
 // Listen for message events from the main script
-self.addEventListener('message', (event) => {
+self.addEventListener('message', async (event) => {
     if (event.data && event.data.type === 'GET_VERSION') {
+        const { existingVersion } = await checkCacheVersion();
         // Send the current version to the client
         if (event.ports && event.ports[0]) {
             event.ports[0].postMessage({
-                version: CACHE_VERSION
-            });
-        } else {
-            // Fallback if no port is available
-            self.clients.matchAll().then(clients => {
-                clients.forEach(client => {
-                    client.postMessage({
-                        type: 'SW_VERSION',
-                        version: CACHE_VERSION
-                    });
-                });
+                currentVersion: existingVersion,
+                newVersion: CACHE_VERSION
             });
         }
+    } else if (event.data && event.data.type === 'PERFORM_UPDATE') {
+        // User has confirmed they want to update
+        await installCache();
+        // Notify clients that update is complete
+        self.clients.matchAll().then(clients => {
+            clients.forEach(client => {
+                client.postMessage({
+                    type: 'UPDATE_COMPLETE',
+                    version: CACHE_VERSION
+                });
+            });
+        });
     }
 });

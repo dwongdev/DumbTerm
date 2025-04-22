@@ -598,7 +598,7 @@ h2 {
     height: 28px;
     display: flex;
     position: relative;
-    bottom: 4px;
+    bottom: 3px;
     align-items: center;
     justify-content: center;
     cursor: pointer;
@@ -712,6 +712,15 @@ h2 {
     animation: slideInNotification 0.3s ease forwards;
 }
 
+.update-notification.error {
+    border-left-color: #ff4444;
+}
+
+.update-notification.error button {
+    background: var(--secondary-color);
+    color: var(--text);
+}
+
 @keyframes slideInNotification {
     from {
         transform: translateX(100%);
@@ -736,11 +745,16 @@ h2 {
     padding: 0.5rem 1rem;
     cursor: pointer;
     font-weight: 500;
-    transition: background-color 0.2s;
+    transition: all 0.2s;
 }
 
 .update-notification button:hover {
     background: var(--primary-hover);
+}
+
+.update-notification button:disabled {
+    opacity: 0.7;
+    cursor: wait;
 }
 
 .update-notification button.secondary {

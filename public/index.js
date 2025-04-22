@@ -1,6 +1,9 @@
 import TerminalManager from "./managers/terminal.js";
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Shared timeout variable for update process
+    let updateTimeout;
+
     // Theme toggle functionality
     function initThemeToggle() {
         const themeToggle = document.getElementById('themeToggle');
@@ -102,14 +105,39 @@ document.addEventListener('DOMContentLoaded', () => {
             navigator.serviceWorker.register(joinPath(`service-worker.js?v=${swVersion}`))
                 .then((reg) => {
                     console.log("Service Worker registered:", reg.scope);
+                    // Check version immediately after registration
                     checkVersion();
                 })
                 .catch((err) => console.log("Service Worker registration failed:", err));
                 
             // Listen for version messages from the service worker
             navigator.serviceWorker.addEventListener('message', (event) => {
-                if (event.data && event.data.type === 'SW_VERSION') {
-                    handleVersionMessage(event.data.version);
+                if (event.data.type === 'UPDATE_AVAILABLE') {
+                    showUpdateNotification(event.data.currentVersion, event.data.newVersion);
+                } else if (event.data.type === 'UPDATE_COMPLETE') {
+                    // Clear any pending timeout
+                    if (updateTimeout) {
+                        clearTimeout(updateTimeout);
+                    }
+                    
+                    // Remove the update notification
+                    const existingNotifications = document.querySelectorAll('.update-notification');
+                    existingNotifications.forEach(notification => notification.remove());
+                    
+                    if (event.data.success === false) {
+                        // Show error notification
+                        const errorNotification = document.createElement('div');
+                        errorNotification.className = 'update-notification error';
+                        errorNotification.innerHTML = `
+                            <p>Update failed: ${event.data.error || 'Unknown error'}</p>
+                            <button onclick="this.parentElement.remove()">Dismiss</button>
+                        `;
+                        document.body.appendChild(errorNotification);
+                        setTimeout(() => errorNotification.remove(), 5000); // Remove after 5 seconds
+                    } else {
+                        // Reload the page after successful update
+                        window.location.reload();
+                    }
                 }
             });
             
@@ -138,7 +166,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Listen for the response
         messageChannel.port1.onmessage = (event) => {
-            handleVersionMessage(event.data.version);
+            if (event.data.currentVersion !== event.data.newVersion) {
+                showUpdateNotification(event.data.currentVersion, event.data.newVersion);
+            }
         };
         
         // Ask the service worker for its version
@@ -148,26 +178,8 @@ document.addEventListener('DOMContentLoaded', () => {
         );
     }
     
-    // Handle a version message from the service worker
-    function handleVersionMessage(swVersion) {
-        // Get the installed version from localStorage
-        const installedVersion = localStorage.getItem('sw-version');
-        
-        console.log(`Current service worker version: ${swVersion}`);
-        console.log(`Previously installed version: ${installedVersion || 'none'}`);
-        
-        // If this is the first install or the version has changed
-        if (!installedVersion) {
-            // First installation - just store the version
-            localStorage.setItem('sw-version', swVersion);
-        } else if (installedVersion !== swVersion) {
-            // Version has changed - show update notification
-            showUpdateNotification();
-        }
-    }
-    
     // Show a notification when updates are available
-    function showUpdateNotification() {
+    function showUpdateNotification(currentVersion, newVersion) {
         // Remove any existing notifications first
         const existingNotifications = document.querySelectorAll('.update-notification');
         existingNotifications.forEach(notification => notification.remove());
@@ -175,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const updateNotification = document.createElement('div');
         updateNotification.className = 'update-notification';
         updateNotification.innerHTML = `
-            <p>New version available!</p>
+            <p>New version ${newVersion} available!</p>
             <button id="update-now">Update Now</button>
             <button id="update-later" class="secondary">Later</button>
         `;
@@ -187,53 +199,27 @@ document.addEventListener('DOMContentLoaded', () => {
             updateButton.innerHTML = 'Updating...';
             updateButton.disabled = true;
             
-            try {
-                // Clear all caches
-                if ('caches' in window) {
-                    const cacheNames = await caches.keys();
-                    await Promise.all(
-                        cacheNames.map(cacheName => {
-                            console.log(`Clearing cache: ${cacheName}`);
-                            return caches.delete(cacheName);
-                        })
-                    );
-                    console.log('All caches cleared successfully');
-                }
-                
-                // Unregister service workers
-                if ('serviceWorker' in navigator) {
-                    const registrations = await navigator.serviceWorker.getRegistrations();
-                    await Promise.all(
-                        registrations.map(registration => {
-                            console.log('Unregistering service worker');
-                            return registration.unregister();
-                        })
-                    );
-                    console.log('All service workers unregistered');
-                }
-                
-                // Update the stored version in localStorage
-                if (navigator.serviceWorker.controller) {
-                    const messageChannel = new MessageChannel();
+            if (navigator.serviceWorker.controller) {
+                // Set a timeout to handle cases where the update might hang
+                if (updateTimeout) clearTimeout(updateTimeout);
+                updateTimeout = setTimeout(() => {
+                    const existingNotifications = document.querySelectorAll('.update-notification');
+                    existingNotifications.forEach(notification => notification.remove());
                     
-                    messageChannel.port1.onmessage = (event) => {
-                        localStorage.setItem('sw-version', event.data.version);
-                    };
-                    
-                    navigator.serviceWorker.controller.postMessage(
-                        { type: 'GET_VERSION' },
-                        [messageChannel.port2]
-                    );
-                }
+                    // Show error notification
+                    const errorNotification = document.createElement('div');
+                    errorNotification.className = 'update-notification error';
+                    errorNotification.innerHTML = `
+                        <p>Update timed out. Please try again.</p>
+                        <button onclick="this.parentElement.remove()">Dismiss</button>
+                    `;
+                    document.body.appendChild(errorNotification);
+                    setTimeout(() => errorNotification.remove(), 5000);
+                }, 30000); // 30 second timeout
                 
-                // Force reload
-                window.location.reload(true);
-            } catch (error) {
-                console.error('Error during update process:', error);
-                window.location.reload();
+                // Tell service worker to perform the update
+                navigator.serviceWorker.controller.postMessage({ type: 'PERFORM_UPDATE' });
             }
-            
-            updateNotification.remove();
         });
         
         document.getElementById('update-later').addEventListener('click', () => {
@@ -242,6 +228,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     async function initialize() {
+        try {
+            // Check PIN requirements first
+            const pinResponse = await fetch(joinPath('api/require-pin'));
+            const pinData = await pinResponse.json();
+            
+            if (pinData.required && !pinData.success) {
+                window.location.href = joinPath('login');
+                return;
+            }
+        } catch (err) {
+            console.error('Error checking PIN requirement:', err);
+        }
+
         initThemeToggle();
         // Set site title
         const siteTitle = window.appConfig?.siteTitle || 'DumbTerm';
@@ -251,7 +250,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Initialize terminal manager only after DOM is fully loaded
         if (document.querySelector('.terminals-container')) {
             const terminalManager = new TerminalManager(isMacOS, setupToolTips);
-            // The handleNewTab call is removed as the terminal manager now handles this in loadSessionState
         }
 
         const tooltips = document.querySelectorAll('[data-tooltip]');
