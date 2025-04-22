@@ -2,7 +2,7 @@
 
 A stupidly simple web-based terminal emulator, with common tools and Starship enabled! 🚀
 
-![dumbterm-preview](https://github.com/user-attachments/assets/46d4f035-9675-4fc3-9493-b6c896d53911)
+![dumbterm-preview](https://github.com/user-attachments/assets/12f2174e-d8ae-4330-91a0-da211d784583)
 
 ## Table of Contents
 - [Features](#features)
