@@ -172,39 +172,106 @@ export default class TerminalManager {
         const tab = e.target;
         tab.classList.add('dragging');
         
-        // Create and style ghost element
-        const ghost = tab.cloneNode(true);
-        ghost.classList.add('ghost-tab');
-        ghost.style.position = 'absolute';
-        ghost.style.opacity = '0.5';
-        ghost.style.pointerEvents = 'none';
-        document.body.appendChild(ghost);
-        
-        // Set drag image and data
-        e.dataTransfer.setDragImage(ghost, e.offsetX, e.offsetY);
+        // Set data for the drag operation
         e.dataTransfer.setData('text/plain', id.toString());
         
-        // Remove ghost element after a short delay
-        setTimeout(() => document.body.removeChild(ghost), 0);
+        // Use the actual tab as the drag image with the cursor at the right position
+        e.dataTransfer.setDragImage(tab, e.offsetX, e.offsetY);
+        
+        // Store the dragged tab ID for reference during drag operations
+        this.draggedTabId = id;
+        
+        // Create a smooth opacity transition for the dragged element
+        requestAnimationFrame(() => {
+            tab.style.opacity = '0.7';
+            tab.style.transform = 'scale(1.02)';
+        });
     }
 
     handleDragEnd(e) {
-        e.target.classList.remove('dragging');
-        document.querySelectorAll('.terminal-tab').forEach(tab => {
-            tab.classList.remove('drag-over');
-        });
+        // Remove dragging class and reset opacity
+        const tab = e.target;
+        tab.classList.remove('dragging');
+        tab.style.opacity = '';
+        tab.style.transform = '';
+        
+        // Update internal data structure to match the visual order
+        this.updateTabOrder();
+        
+        // Save session state to persist the new order
+        this.saveSessionState();
+        
+        // Clean up
+        this.draggedTabId = null;
+        
+        // Focus the active terminal
+        const activeTerminal = this.terminals.get(this.activeTabId);
+        if (activeTerminal && activeTerminal.terminal) {
+            activeTerminal.terminal.focus();
+        }
     }
 
     handleDragOver(e) {
         e.preventDefault();
+        
+        const tabList = document.querySelector('.tab-list');
+        const draggedTab = tabList.querySelector(`.terminal-tab[data-tab-id="${this.draggedTabId}"]`);
+        
+        if (!draggedTab) return;
+        
+        // Get all tabs
+        const tabs = Array.from(tabList.querySelectorAll('.terminal-tab'));
+        
+        // Find the tab we're currently hovering over
+        const targetTab = tabs.find(tab => {
+            if (tab === draggedTab) return false;
+            
+            const rect = tab.getBoundingClientRect();
+            return e.clientX >= rect.left && e.clientX <= rect.right;
+        });
+        
+        if (!targetTab) return;
+        
+        // Determine if cursor is in the left or right half of the target tab
+        const targetRect = targetTab.getBoundingClientRect();
+        const midpointX = targetRect.left + (targetRect.width / 2);
+        const isAfterMidpoint = e.clientX > midpointX;
+        
+        const draggedIndex = tabs.indexOf(draggedTab);
+        const targetIndex = tabs.indexOf(targetTab);
+        
+        // Determine if we should move the tab
+        if ((draggedIndex < targetIndex && isAfterMidpoint) || 
+            (draggedIndex > targetIndex && !isAfterMidpoint)) {
+            
+            // Remove the highlighting from all tabs
+            tabs.forEach(t => t.classList.remove('drag-over'));
+            
+            // Highlight the target tab with a subtle effect
+            targetTab.classList.add('drag-over');
+            
+            // Track the previously moved tab to reset its animation
+            if (this.previouslyMovedTab) {
+                this.previouslyMovedTab.classList.remove('just-moved');
+            }
+            
+            // Actually reorder the DOM elements in real-time
+            if (isAfterMidpoint && draggedIndex < targetIndex) {
+                // When moving right, insert after the target
+                tabList.insertBefore(draggedTab, targetTab.nextSibling);
+                targetTab.classList.add('just-moved');
+                this.previouslyMovedTab = targetTab;
+            } else if (!isAfterMidpoint && draggedIndex > targetIndex) {
+                // When moving left, insert before the target
+                tabList.insertBefore(draggedTab, targetTab);
+                targetTab.classList.add('just-moved');
+                this.previouslyMovedTab = targetTab;
+            }
+        }
     }
 
     handleDragEnter(e) {
         e.preventDefault();
-        const tab = e.target.closest('.terminal-tab');
-        if (tab && !tab.classList.contains('dragging')) {
-            tab.classList.add('drag-over');
-        }
     }
 
     handleDragLeave(e) {
@@ -214,34 +281,26 @@ export default class TerminalManager {
         }
     }
 
-    handleDrop(e, targetId) {
+    handleDrop(e) {
         e.preventDefault();
-        const sourceId = parseInt(e.dataTransfer.getData('text/plain'));
-        const targetTab = e.target.closest('.terminal-tab');
         
-        if (sourceId === targetId || !targetTab) return;
-
-        const tabList = document.querySelector('.tab-list');
-        const tabs = Array.from(tabList.children);
-        const sourceTab = tabs.find(tab => parseInt(tab.dataset.tabId) === sourceId);
-        const sourceIndex = tabs.indexOf(sourceTab);
-        const targetIndex = tabs.indexOf(targetTab);
-
-        if (sourceIndex === -1 || targetIndex === -1) return;
-
-        // Reorder DOM elements
-        if (sourceIndex < targetIndex) {
-            targetTab.parentNode.insertBefore(sourceTab, targetTab.nextSibling);
-        } else {
-            targetTab.parentNode.insertBefore(sourceTab, targetTab);
+        // Remove highlighting and animation classes from all tabs
+        document.querySelectorAll('.terminal-tab').forEach(tab => {
+            tab.classList.remove('drag-over');
+            tab.classList.remove('just-moved');
+        });
+        
+        this.previouslyMovedTab = null;
+        
+        // The tab order has already been updated during drag
+        // Just make sure the active tab maintains proper styling
+        const sourceId = parseInt(e.dataTransfer.getData('text/plain'));
+        if (!isNaN(sourceId) && sourceId === this.activeTabId) {
+            const sourceTab = document.querySelector(`.terminal-tab[data-tab-id="${sourceId}"]`);
+            if (sourceTab) {
+                sourceTab.classList.add('active');
+            }
         }
-
-        // Update order in data structure and save
-        this.updateTabOrder();
-        this.saveSessionState();
-
-        // Remove drag-over styling
-        targetTab.classList.remove('drag-over');
     }
 
     updateTabOrder() {

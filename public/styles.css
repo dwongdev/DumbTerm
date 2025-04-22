@@ -469,12 +469,14 @@ h2 {
     cursor: grab;
     font-size: 0.875rem;
     white-space: nowrap;
-    transition: all var(--transition);
+    transition: transform 0.2s ease, opacity 0.2s ease, background-color 0.1s ease;
+    will-change: transform, opacity;
     min-width: 120px;
     max-width: 250px;
     height: 28px; /* Match the height of the add button */
     user-select: none;
     position: relative; /* Added to ensure proper positioning of the tooltip */
+    z-index: 1;
 }
 
 /* Add this to handle text overflow */
@@ -551,12 +553,32 @@ h2 {
 }
 
 .terminal-tab.dragging {
-    opacity: 0.5;
-    cursor: grabbing;
+    opacity: 0.7;
+    z-index: 10;
 }
 
 .terminal-tab.drag-over {
-    border-right: 3px solid var(--accent-color);
+    background-color: var(--tab-hover-bg);
+}
+
+.terminal-tab.just-moved {
+    animation: slideIn 0.25s ease-out forwards;
+}
+
+@keyframes slideIn {
+    0% { transform: translateX(15px); opacity: 0.7; }
+    100% { transform: translateX(0); opacity: 1; }
+}
+
+/* Style for drop indicator */
+.drop-indicator {
+    position: absolute;
+    background: var(--accent);
+    width: 2px;
+    top: 0;
+    bottom: 0;
+    transition: left 0.15s ease;
+    z-index: 5;
 }
 
 .ghost-tab {
