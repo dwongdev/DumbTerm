@@ -249,6 +249,8 @@ export default class TerminalManager {
             
             // Save session state
             this.saveSessionState();
+
+            terminal.terminal.focus();
         };
 
         input.addEventListener('blur', finishRename);
@@ -547,7 +549,7 @@ export default class TerminalManager {
                         // Small delay to ensure terminal has fully processed the output
                         setTimeout(() => {
                             self.saveSessionState();
-                        }, 100);
+                        }, 1000);
                     }
                 } catch (e) {
                     console.error('Error processing message:', e);
@@ -775,7 +777,7 @@ export default class TerminalManager {
                 const tab = this.createTab(id);
                 tab.querySelector('span').textContent = name;
                 const container = this.createTerminalContainer(id);
-                const terminal = this.initTerminal(container, content);
+                const terminal = this.initTerminal(container, content || '');
                 this.terminals.set(id, { tab, container, terminal });
             });
             
@@ -784,15 +786,68 @@ export default class TerminalManager {
             this.tabCounter = maxId + 1;
             
             // Restore active tab, but skip saving since we just loaded the state
-            if (sessionState.activeTabId !== null && this.terminals.has(sessionState.activeTabId)) {
-                this.activateTab(sessionState.activeTabId, true);
-            } else if (this.terminals.size > 0) {
-                // Fallback: activate the first terminal, but skip saving
-                this.activateTab(Array.from(this.terminals.keys())[0], true);
+            const activeId = sessionState.activeTabId !== null && this.terminals.has(sessionState.activeTabId) 
+                ? sessionState.activeTabId 
+                : (this.terminals.size > 0 ? Array.from(this.terminals.keys())[0] : null);
+            
+            if (activeId !== null) {
+                this.activateTab(activeId, true);
+                
+                // Apply focus with increasing delays to handle race conditions
+                const focusWithRetry = (attempts = 0) => {
+                    setTimeout(() => {
+                        const terminal = this.terminals.get(activeId);
+                        if (terminal && terminal.terminal) {
+                            try {
+                                terminal.terminal.focus();
+                            } catch (e) {
+                                console.warn('Failed to focus terminal:', e);
+                                // Retry with longer delay if we haven't exceeded max attempts
+                                if (attempts < 3) {
+                                    focusWithRetry(attempts + 1);
+                                }
+                            }
+                        }
+                    }, 100 * Math.pow(2, attempts)); // Exponential backoff: 100ms, 200ms, 400ms
+                };
+                
+                // Start focus attempts after DOM is fully ready
+                if (document.readyState === 'complete') {
+                    focusWithRetry();
+                } else {
+                    window.addEventListener('load', () => focusWithRetry());
+                }
+                
+                // Also focus explicitly when the window gets focus
+                window.addEventListener('focus', () => {
+                    const terminal = this.terminals.get(this.activeTabId);
+                    if (terminal && terminal.terminal) {
+                        terminal.terminal.focus();
+                    }
+                }, { once: true });
             }
         } else {
             // No saved state, create default tab
             this.handleNewTab();
+            
+            // Ensure new terminal gets focus after page is fully loaded
+            if (document.readyState === 'complete') {
+                setTimeout(() => {
+                    if (this.activeTabId !== null) {
+                        const terminal = this.terminals.get(this.activeTabId);
+                        if (terminal) terminal.terminal.focus();
+                    }
+                }, 100);
+            } else {
+                window.addEventListener('load', () => {
+                    setTimeout(() => {
+                        if (this.activeTabId !== null) {
+                            const terminal = this.terminals.get(this.activeTabId);
+                            if (terminal) terminal.terminal.focus();
+                        }
+                    }, 100);
+                });
+            }
         }
     }
 }
