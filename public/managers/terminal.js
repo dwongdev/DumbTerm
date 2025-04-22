@@ -4,7 +4,7 @@ export default class TerminalManager {
     constructor(isMacOS, setupToolTips) {
         this.terminals = new Map();
         this.activeTabId = null;
-        this.tabCounter = 0;
+        this.tabCounter = 1;
         this.isMacOS = isMacOS;
         this.setupToolTips = setupToolTips;
         this.terminalAddons = new Map(); // Store addon references for each terminal
@@ -74,6 +74,16 @@ export default class TerminalManager {
                     this.handleTabRename(this.activeTabId);
                 }
             }
+            // Command/Control + } or ]: Next tab
+            else if (modifier && (e.key === '>' || e.key === '.')) {
+                e.preventDefault();
+                this.cycleToNextTab();
+            }
+            // Command/Control + { or [: Previous tab
+            else if (modifier && (e.key === '<' || e.key === ',')) {
+                e.preventDefault();
+                this.cycleToPreviousTab();
+            }
         });
     }
 
@@ -126,7 +136,7 @@ export default class TerminalManager {
         tab.setAttribute('data-shortcuts', JSON.stringify({"win": "ctrl+alt+r", "mac": "ctrl+cmd+r"}));
 
         tab.innerHTML = `
-            <span>Term${id + 1}</span>
+            <span>Term${id}</span>
             <button class="close-tab" aria-label="Close terminal" data-tooltip="Close ({shortcut})" data-shortcuts='{"win": "ctrl+alt+w", "mac": "ctrl+cmd+w"}'></button>
         `;
         
@@ -274,6 +284,28 @@ export default class TerminalManager {
         
         // Try to get next tab, if not available get previous
         return ids[currentIndex + 1] || ids[currentIndex - 1] || null;
+    }
+
+    cycleToNextTab() {
+        if (this.terminals.size <= 1 || this.activeTabId === null) return;
+        
+        const ids = Array.from(this.terminals.keys());
+        const currentIndex = ids.indexOf(this.activeTabId);
+        
+        // Get next index, wrap around to 0 if at the end
+        const nextIndex = (currentIndex + 1) % ids.length;
+        this.activateTab(ids[nextIndex]);
+    }
+
+    cycleToPreviousTab() {
+        if (this.terminals.size <= 1 || this.activeTabId === null) return;
+        
+        const ids = Array.from(this.terminals.keys());
+        const currentIndex = ids.indexOf(this.activeTabId);
+        
+        // Get previous index, wrap around to last if at the beginning
+        const previousIndex = (currentIndex - 1 + ids.length) % ids.length;
+        this.activateTab(ids[previousIndex]);
     }
 
     activateTab(id, skipSaving = false) {
