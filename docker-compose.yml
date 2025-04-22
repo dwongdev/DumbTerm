@@ -1,7 +1,7 @@
 services:
   dumbterm:
-    image: dumbwareio/dumbterm:latest
-    # build: .
+    # image: dumbwareio/dumbterm:latest
+    build: .
     container_name: dumbterm
     restart: unless-stopped
     ports:

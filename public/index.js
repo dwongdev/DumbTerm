@@ -37,6 +37,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const isMobile = window.matchMedia('(max-width: 585px)').matches || window.matchMedia('(pointer: coarse)').matches;
         if (isMobile) return;
         
+        // Function to hide all visible tooltips
+        const hideAllTooltips = () => {
+            document.querySelectorAll('.tooltip.show').forEach(tip => {
+                tip.classList.remove('show');
+            });
+        };
+        
         tooltips.forEach((element) => {
             let tooltipText = element.getAttribute('data-tooltip');
             const shortcutsStr = element.getAttribute('data-shortcuts');
@@ -63,15 +70,29 @@ document.addEventListener('DOMContentLoaded', () => {
             document.body.appendChild(tooltip);
     
             element.addEventListener('mouseover', (e) => {
+                // First hide all visible tooltips
+                hideAllTooltips();
+                
+                // Then show this tooltip
                 tooltip.textContent = element.getAttribute('data-tooltip');
                 tooltip.style.left = e.pageX + 10 + 'px';
                 tooltip.style.top = e.pageY + 10 + 'px';
                 tooltip.classList.add('show');
+                
+                // Stop event propagation to prevent parent tooltips from showing
+                e.stopPropagation();
             });
-            element.addEventListener('mouseout', () => {
+            
+            element.addEventListener('mouseout', (e) => {
                 tooltip.classList.remove('show');
+                
+                // Prevent the mouseout event from bubbling to parent elements
+                e.stopPropagation();
             });
         });
+        
+        // Also hide tooltips when clicking anywhere
+        document.addEventListener('click', hideAllTooltips);
     }
 
     const registerServiceWorker = () => {
@@ -92,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Initialize terminal manager only after DOM is fully loaded
         if (document.querySelector('.terminals-container')) {
             const terminalManager = new TerminalManager(isMacOS, setupToolTips);
-            await terminalManager.handleNewTab(); // Create initial tab
+            // The handleNewTab call is removed as the terminal manager now handles this in loadSessionState
         }
 
         const tooltips = document.querySelectorAll('[data-tooltip]');

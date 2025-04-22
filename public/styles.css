@@ -42,6 +42,9 @@
     --terminal-border: rgba(0, 0, 0, 0.1);
     --btn-default:rgba(231, 229, 229, 0.5);
     --terminal-font: 'JetBrainsMono Nerd Font', Menlo, Monaco, 'Courier New', monospace;
+    --tooltip-bg: rgba(0, 0, 0, 0.7);
+    --tooltip-text: #fff;
+    --accent-color: var(--primary);
 }
 
 [data-theme="dark"] {
@@ -58,6 +61,9 @@
     --terminal-selection: rgba(33, 149, 243, 0.2);
     --terminal-border: rgba(255, 255, 255, 0.1);
     --btn-default:rgba(231, 229, 229, 0.3);
+    --tooltip-bg: rgba(255, 255, 255, 0.85);
+    --tooltip-text: #333;
+    --accent-color: var(--primary);
 }
 
 /* Base styles */
@@ -404,21 +410,51 @@ h2 {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    height: 36px;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    height: 42px;
+    position: relative;
 }
 
-.terminal-tabs::-webkit-scrollbar {
+/* Show scrollbar only when needed */
+.tab-list::-webkit-scrollbar {
+    height: 6px;
+    display: block;
+}
+
+.tab-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.tab-list::-webkit-scrollbar-thumb {
+    background: var(--terminal-border);
+    border-radius: 3px;
+}
+
+.tab-list::-webkit-scrollbar-thumb:hover {
+    background: var(--primary);
+}
+
+/* Firefox scrollbar */
+.tab-list {
+    scrollbar-width: thin;
+    scrollbar-color: var(--terminal-border) transparent;
+}
+
+/* Hide scrollbar when not needed (no overflow) */
+.tab-list.no-scroll::-webkit-scrollbar {
     display: none;
+}
+.tab-list.no-scroll {
+    scrollbar-width: none;
 }
 
 .tab-list {
     display: flex;
+    align-items: center; /* Ensure tabs are centered vertically */
     gap: 0.25rem;
     flex: 1;
     min-width: 0;
+    overflow-x: auto;
+    padding-bottom: 6px; /* Space for scrollbar */
 }
 
 .terminal-tab {
@@ -430,12 +466,25 @@ h2 {
     color: var(--terminal-text);
     border: 1px solid var(--terminal-border);
     border-radius: 6px;
-    cursor: pointer;
+    cursor: grab;
     font-size: 0.875rem;
     white-space: nowrap;
-    transition: all var(--transition);
+    transition: transform 0.2s ease, opacity 0.2s ease, background-color 0.1s ease;
+    will-change: transform, opacity;
     min-width: 120px;
-    max-width: 200px;
+    max-width: 250px;
+    height: 28px; /* Match the height of the add button */
+    user-select: none;
+    position: relative; /* Added to ensure proper positioning of the tooltip */
+    z-index: 1;
+}
+
+/* Add this to handle text overflow */
+.terminal-tab span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
 }
 
 .terminal-tab.active {
@@ -503,6 +552,43 @@ h2 {
     transform: rotate(-45deg) scale(1.2);
 }
 
+.terminal-tab.dragging {
+    opacity: 0.7;
+    z-index: 10;
+}
+
+.terminal-tab.drag-over {
+    background-color: var(--tab-hover-bg);
+}
+
+.terminal-tab.just-moved {
+    animation: slideIn 0.25s ease-out forwards;
+}
+
+@keyframes slideIn {
+    0% { transform: translateX(15px); opacity: 0.7; }
+    100% { transform: translateX(0); opacity: 1; }
+}
+
+/* Style for drop indicator */
+.drop-indicator {
+    position: absolute;
+    background: var(--accent);
+    width: 2px;
+    top: 0;
+    bottom: 0;
+    transition: left 0.15s ease;
+    z-index: 5;
+}
+
+.ghost-tab {
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 4px 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
 .new-tab-button {
     background: var(--btn-default);
     color: var(--terminal-text);
@@ -520,6 +606,7 @@ h2 {
     margin-right: 8px;
     transition: all var(--transition);
     flex-shrink: 0;
+    align-self: center; /* Ensure button is centered vertically */
 }
 
 .new-tab-button:hover {
@@ -532,8 +619,10 @@ h2 {
     position: relative;
     flex: 1;
     min-height: 0;
-    height: 100%;
-    margin-top: 0.5rem;
+    height: calc(100% - 8px); /* Adjust for the margin we added */
+    margin-top: 0;
+    border-radius: 12px; /* Round all corners */
+    overflow: hidden;
 }
 
 .terminals-container > div {
@@ -574,6 +663,33 @@ h2 {
 
 .xterm-link-layer > div {
     pointer-events: auto;
+}
+
+/* Tab renaming styles */
+.rename-input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: inherit;
+    font-size: inherit;
+    font-family: inherit;
+    width: 100%;
+    max-width: 200px;
+    padding: 0 2px;
+    margin: 0;
+    border-bottom: 1px solid var(--accent-color);
+}
+
+/* Tabs container styling */
+.tabs-container {
+    background: var(--terminal-bg);
+    border-radius: 12px; /* Rounded corners all around */
+    padding: 8px 12px 2px;
+    border: 1px solid var(--terminal-border);
+    margin-bottom: 0.5rem; /* Add space between tabs and terminal */
+    position: relative;
+    z-index: 5;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Slight shadow for depth */
 }
 
 /* Responsive adjustments */
