@@ -130,6 +130,7 @@ export default class TerminalManager {
         const tab = document.createElement('div');
         tab.className = 'terminal-tab';
         tab.dataset.tabId = id;
+        tab.draggable = true; // Make tab draggable
         
         // Add tooltip for double-click rename functionality
         tab.setAttribute('data-tooltip', 'Double-click to rename ({shortcut})');
@@ -139,6 +140,14 @@ export default class TerminalManager {
             <span>Term${id}</span>
             <button class="close-tab" aria-label="Close terminal" data-tooltip="Close ({shortcut})" data-shortcuts='{"win": "ctrl+alt+w", "mac": "ctrl+cmd+w"}'></button>
         `;
+
+        // Add drag and drop event listeners
+        tab.addEventListener('dragstart', (e) => this.handleDragStart(e, id));
+        tab.addEventListener('dragend', (e) => this.handleDragEnd(e));
+        tab.addEventListener('dragover', (e) => this.handleDragOver(e));
+        tab.addEventListener('dragenter', (e) => this.handleDragEnter(e));
+        tab.addEventListener('dragleave', (e) => this.handleDragLeave(e));
+        tab.addEventListener('drop', (e) => this.handleDrop(e, id));
         
         tab.addEventListener('click', () => this.handleTabClick(id));
         tab.addEventListener('dblclick', (e) => {
@@ -157,6 +166,97 @@ export default class TerminalManager {
         // Apply tooltips to both the tab itself and its close button
         this.setupToolTips(document.querySelectorAll(".close-tab, .terminal-tab"));
         return tab;
+    }
+
+    handleDragStart(e, id) {
+        const tab = e.target;
+        tab.classList.add('dragging');
+        
+        // Create and style ghost element
+        const ghost = tab.cloneNode(true);
+        ghost.classList.add('ghost-tab');
+        ghost.style.position = 'absolute';
+        ghost.style.opacity = '0.5';
+        ghost.style.pointerEvents = 'none';
+        document.body.appendChild(ghost);
+        
+        // Set drag image and data
+        e.dataTransfer.setDragImage(ghost, e.offsetX, e.offsetY);
+        e.dataTransfer.setData('text/plain', id.toString());
+        
+        // Remove ghost element after a short delay
+        setTimeout(() => document.body.removeChild(ghost), 0);
+    }
+
+    handleDragEnd(e) {
+        e.target.classList.remove('dragging');
+        document.querySelectorAll('.terminal-tab').forEach(tab => {
+            tab.classList.remove('drag-over');
+        });
+    }
+
+    handleDragOver(e) {
+        e.preventDefault();
+    }
+
+    handleDragEnter(e) {
+        e.preventDefault();
+        const tab = e.target.closest('.terminal-tab');
+        if (tab && !tab.classList.contains('dragging')) {
+            tab.classList.add('drag-over');
+        }
+    }
+
+    handleDragLeave(e) {
+        const tab = e.target.closest('.terminal-tab');
+        if (tab) {
+            tab.classList.remove('drag-over');
+        }
+    }
+
+    handleDrop(e, targetId) {
+        e.preventDefault();
+        const sourceId = parseInt(e.dataTransfer.getData('text/plain'));
+        const targetTab = e.target.closest('.terminal-tab');
+        
+        if (sourceId === targetId || !targetTab) return;
+
+        const tabList = document.querySelector('.tab-list');
+        const tabs = Array.from(tabList.children);
+        const sourceTab = tabs.find(tab => parseInt(tab.dataset.tabId) === sourceId);
+        const sourceIndex = tabs.indexOf(sourceTab);
+        const targetIndex = tabs.indexOf(targetTab);
+
+        if (sourceIndex === -1 || targetIndex === -1) return;
+
+        // Reorder DOM elements
+        if (sourceIndex < targetIndex) {
+            targetTab.parentNode.insertBefore(sourceTab, targetTab.nextSibling);
+        } else {
+            targetTab.parentNode.insertBefore(sourceTab, targetTab);
+        }
+
+        // Update order in data structure and save
+        this.updateTabOrder();
+        this.saveSessionState();
+
+        // Remove drag-over styling
+        targetTab.classList.remove('drag-over');
+    }
+
+    updateTabOrder() {
+        // Create new Map with updated order
+        const newOrder = new Map();
+        const tabList = document.querySelector('.tab-list');
+        
+        Array.from(tabList.children).forEach(tab => {
+            const id = parseInt(tab.dataset.tabId);
+            if (this.terminals.has(id)) {
+                newOrder.set(id, this.terminals.get(id));
+            }
+        });
+        
+        this.terminals = newOrder;
     }
 
     createTerminalContainer(id) {
@@ -719,22 +819,14 @@ export default class TerminalManager {
             activeTabId: this.activeTabId,
             tabCounter: this.tabCounter,
             terminals: Array.from(this.terminals.entries()).map(([id, { tab, terminal }]) => {
-                // Get the serialize addon for this terminal
                 const addons = this.terminalAddons.get(terminal);
                 let serializedContent = null;
                 
-                // Use the SerializeAddon to serialize terminal content
                 if (addons && addons.serializeAddon) {
                     try {
-                        // Get serialized content
                         serializedContent = addons.serializeAddon.serialize();
-                        
-                        // Handle prompt lines (for both starship and standard prompts)
                         if (serializedContent) {
-                            // Split into lines
                             const lines = serializedContent.split(/\r?\n/);
-                            
-                            // Scan from the end to find where the actual content ends
                             let lastContentLineIndex = -1;
                             let seenNonPrompt = false;
                             
@@ -754,35 +846,28 @@ export default class TerminalManager {
                                 /\u001b\[\?\d+[hl]/
                             ];
                             
-                            // Start from the end and work backwards
                             for (let i = lines.length - 1; i >= 0; i--) {
                                 const line = lines[i].trimEnd();
                                 
-                                // Skip empty lines
                                 if (line === '') {
                                     continue;
                                 }
                                 
-                                // Check if this line matches any prompt pattern
                                 const isPrompt = promptPatterns.some(pattern => pattern.test(line));
                                 
                                 if (!isPrompt) {
-                                    // Found actual terminal output
                                     lastContentLineIndex = i;
                                     seenNonPrompt = true;
                                     break;
                                 }
                             }
                             
-                            // If we found actual content, keep everything up to that point
                             if (seenNonPrompt) {
-                                // Keep content up to and including the last non-prompt line
                                 serializedContent = lines.slice(0, lastContentLineIndex + 1).join('\n');
                                 if (serializedContent.length > 0) {
                                     serializedContent += '\n';
                                 }
                             } else {
-                                // Terminal only contains prompts, so return empty string
                                 serializedContent = '';
                             }
                         }
@@ -794,7 +879,8 @@ export default class TerminalManager {
                 return {
                     id,
                     name: tab.querySelector('span').textContent,
-                    content: serializedContent
+                    content: serializedContent,
+                    order: Array.from(this.terminals.keys()).indexOf(id) // Save the order
                 };
             })
         };
@@ -804,7 +890,10 @@ export default class TerminalManager {
     loadSessionState() {
         const sessionState = this.storageManager.get('sessionState');
         if (sessionState && sessionState.terminals && sessionState.terminals.length > 0) {
-            // Create all terminals from saved state
+            // Sort terminals by saved order before creating them
+            sessionState.terminals.sort((a, b) => (a.order || 0) - (b.order || 0));
+            
+            // Create all terminals in the sorted order
             sessionState.terminals.forEach(({ id, name, content }) => {
                 const tab = this.createTab(id);
                 tab.querySelector('span').textContent = name;
