@@ -228,11 +228,24 @@ export default class TerminalManager {
         span.replaceWith(input);
         input.focus();
 
+        // Flag to prevent double-replacement of the input element
+        let hasFinishedRename = false;
+
         const finishRename = () => {
+            // Skip if we've already processed this rename
+            if (hasFinishedRename) return;
+            
+            // Mark as finished to prevent duplicate processing
+            hasFinishedRename = true;
+            
             const newName = input.value.trim() || currentName;
             const newSpan = document.createElement('span');
             newSpan.textContent = newName;
-            input.replaceWith(newSpan);
+            
+            // Only attempt to replace if input is still in the DOM
+            if (input.parentElement) {
+                input.replaceWith(newSpan);
+            }
             
             // Save session state
             this.saveSessionState();
@@ -241,8 +254,10 @@ export default class TerminalManager {
         input.addEventListener('blur', finishRename);
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
+                e.preventDefault(); // Prevent form submission
                 finishRename();
             } else if (e.key === 'Escape') {
+                e.preventDefault(); // Prevent dialog closing
                 input.value = currentName;
                 finishRename();
             }
