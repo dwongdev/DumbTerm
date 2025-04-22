@@ -169,6 +169,11 @@ export default class TerminalManager {
     }
 
     handleDragStart(e, id) {
+        // Activate the tab first before starting the drag operation
+        if (this.activeTabId !== id) {
+            this.activateTab(id);
+        }
+        
         const tab = e.target;
         tab.classList.add('dragging');
         
@@ -186,6 +191,16 @@ export default class TerminalManager {
             tab.style.opacity = '0.7';
             tab.style.transform = 'scale(1.02)';
         });
+        
+        // Hide all tooltips during dragging
+        const tooltips = document.body.querySelectorAll('.tooltip');
+        tooltips.forEach(tooltip => {
+            tooltip.classList.remove('show');
+            tooltip.style.display = 'none';
+        });
+        
+        // Set a flag to prevent tooltips during dragging
+        this.isDragging = true;
     }
 
     handleDragEnd(e) {
@@ -203,6 +218,16 @@ export default class TerminalManager {
         
         // Clean up
         this.draggedTabId = null;
+        
+        // Reset the dragging flag 
+        this.isDragging = false;
+        
+        // Restore tooltips functionality
+        const tooltips = document.body.querySelectorAll('.tooltip');
+        tooltips.forEach(tooltip => {
+            // Just reset the display property - tooltips will show normally on hover again
+            tooltip.style.display = '';
+        });
         
         // Focus the active terminal
         const activeTerminal = this.terminals.get(this.activeTabId);
@@ -232,17 +257,19 @@ export default class TerminalManager {
         
         if (!targetTab) return;
         
-        // Determine if cursor is in the left or right half of the target tab
+        // Get the dimensions of the target tab
         const targetRect = targetTab.getBoundingClientRect();
-        const midpointX = targetRect.left + (targetRect.width / 2);
-        const isAfterMidpoint = e.clientX > midpointX;
+        
+        const sensitivityFactor = 0.7;
+        const triggerPoint = targetRect.left + (targetRect.width * sensitivityFactor);
+        const isAfterTriggerPoint = e.clientX > triggerPoint;
         
         const draggedIndex = tabs.indexOf(draggedTab);
         const targetIndex = tabs.indexOf(targetTab);
         
-        // Determine if we should move the tab
-        if ((draggedIndex < targetIndex && isAfterMidpoint) || 
-            (draggedIndex > targetIndex && !isAfterMidpoint)) {
+        // Determine if we should move the tab with the more sensitive trigger point
+        if ((draggedIndex < targetIndex && isAfterTriggerPoint) || 
+            (draggedIndex > targetIndex && !isAfterTriggerPoint)) {
             
             // Remove the highlighting from all tabs
             tabs.forEach(t => t.classList.remove('drag-over'));
@@ -256,12 +283,12 @@ export default class TerminalManager {
             }
             
             // Actually reorder the DOM elements in real-time
-            if (isAfterMidpoint && draggedIndex < targetIndex) {
+            if (isAfterTriggerPoint && draggedIndex < targetIndex) {
                 // When moving right, insert after the target
                 tabList.insertBefore(draggedTab, targetTab.nextSibling);
                 targetTab.classList.add('just-moved');
                 this.previouslyMovedTab = targetTab;
-            } else if (!isAfterMidpoint && draggedIndex > targetIndex) {
+            } else if (!isAfterTriggerPoint && draggedIndex > targetIndex) {
                 // When moving left, insert before the target
                 tabList.insertBefore(draggedTab, targetTab);
                 targetTab.classList.add('just-moved');
