@@ -113,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Initialize terminal manager only after DOM is fully loaded
         if (document.querySelector('.terminals-container')) {
             const terminalManager = new TerminalManager(isMacOS, setupToolTips);
-            await terminalManager.handleNewTab(); // Create initial tab
+            // The handleNewTab call is removed as the terminal manager now handles this in loadSessionState
         }
 
         const tooltips = document.querySelectorAll('[data-tooltip]');

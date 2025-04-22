@@ -1,3 +1,5 @@
+import StorageManager from './storage.js';
+
 export default class TerminalManager {
     constructor(isMacOS, setupToolTips) {
         this.terminals = new Map();
@@ -5,6 +7,10 @@ export default class TerminalManager {
         this.tabCounter = 0;
         this.isMacOS = isMacOS;
         this.setupToolTips = setupToolTips;
+        this.terminalAddons = new Map(); // Store addon references for each terminal
+        
+        // Initialize storage manager
+        this.storageManager = new StorageManager('dumbterm-');
         
         // Bind event handlers
         this.handleNewTab = this.handleNewTab.bind(this);
@@ -12,6 +18,8 @@ export default class TerminalManager {
         this.handleTabClose = this.handleTabClose.bind(this);
         this.handleTabRename = this.handleTabRename.bind(this);
         this.checkTabOverflow = this.checkTabOverflow.bind(this);
+        this.saveSessionState = this.saveSessionState.bind(this);
+        this.loadSessionState = this.loadSessionState.bind(this);
         
         // Set up event listeners
         const newTabButton = document.querySelector('.new-tab-button');
@@ -21,6 +29,9 @@ export default class TerminalManager {
 
         // Add overflow detection for tabs
         this.initTabOverflowHandling();
+        
+        // Load any saved sessions or create a default tab
+        this.loadSessionState();
 
         // Add keyboard shortcuts
         document.addEventListener('keydown', (e) => {
@@ -152,7 +163,7 @@ export default class TerminalManager {
         const terminal = this.initTerminal(container);
         
         this.terminals.set(id, { tab, container, terminal });
-        this.activateTab(id);
+        this.activateTab(id, true); // Added parameter to skip saving on initial creation
         
         // Check if tabs overflow after adding a new tab
         this.checkTabOverflow();
@@ -188,10 +199,17 @@ export default class TerminalManager {
         if (this.terminals.size === 0) {
             this.tabCounter = 0; // Reset counter so the next tab will be Term1
             this.handleNewTab();
+        } else {
+            // Update tabCounter based on the highest terminal ID + 1
+            const maxId = Math.max(...Array.from(this.terminals.keys()));
+            this.tabCounter = maxId + 1;
         }
         
         // After closing a tab, check overflow status
         this.checkTabOverflow();
+        
+        // Save session state
+        this.saveSessionState();
     }
 
     handleTabRename(id) {
@@ -215,6 +233,9 @@ export default class TerminalManager {
             const newSpan = document.createElement('span');
             newSpan.textContent = newName;
             input.replaceWith(newSpan);
+            
+            // Save session state
+            this.saveSessionState();
         };
 
         input.addEventListener('blur', finishRename);
@@ -238,7 +259,7 @@ export default class TerminalManager {
         return ids[currentIndex + 1] || ids[currentIndex - 1] || null;
     }
 
-    activateTab(id) {
+    activateTab(id, skipSaving = false) {
         // Deactivate current tab
         if (this.activeTabId !== null) {
             const current = this.terminals.get(this.activeTabId);
@@ -255,11 +276,16 @@ export default class TerminalManager {
             next.container.classList.add('active');
             next.terminal.focus();
             this.activeTabId = id;
+            
+            // Save session state when changing tabs, unless skipSaving is true
+            if (!skipSaving) {
+                this.saveSessionState();
+            }
         }
     }
 
     // Terminal initialization
-    initTerminal(container) {
+    initTerminal(container, savedContent = null) {
         const terminal = new Terminal({
             cursorBlink: true,
             fontSize: 15,
@@ -314,6 +340,10 @@ export default class TerminalManager {
         const searchAddon = new SearchAddon.SearchAddon();
         const serializeAddon = new SerializeAddon.SerializeAddon();
         const unicode11Addon = new Unicode11Addon.Unicode11Addon();
+        
+        // Store addons for this terminal
+        const addons = { fitAddon, webLinksAddon, webglAddon, canvasAddon, imageAddon, ligaturesAddon, searchAddon, serializeAddon, unicode11Addon };
+        this.terminalAddons.set(terminal, addons);
 
         // Open terminal in the container first
         terminal.open(container);
@@ -350,6 +380,15 @@ export default class TerminalManager {
 
         // Initial fit
         fitAddon.fit();
+        
+        // Restore saved content if available
+        if (savedContent) {
+            try {
+                terminal.write(savedContent);
+            } catch (e) {
+                console.warn('Failed to restore terminal content:', e);
+            }
+        }
 
         // Add search functionality with Ctrl+Alt+F or Cmd+Alt+F
         document.addEventListener('keydown', (e) => {
@@ -446,6 +485,7 @@ export default class TerminalManager {
         const maxReconnectAttempts = 5;
         const baseReconnectDelay = 1000;
         let reconnectAttempts = 0;
+        const self = this; // Store reference to 'this' for use in callbacks
 
         function connectWebSocket() {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -486,6 +526,13 @@ export default class TerminalManager {
                     const message = JSON.parse(event.data);
                     if (message.type === 'output') {
                         terminal.write(message.data);
+                        
+                        // Save session state immediately after any terminal output
+                        // This ensures we capture the current state including after clear commands
+                        // Small delay to ensure terminal has fully processed the output
+                        setTimeout(() => {
+                            self.saveSessionState();
+                        }, 100);
                     }
                 } catch (e) {
                     console.error('Error processing message:', e);
@@ -543,6 +590,9 @@ export default class TerminalManager {
                     connectWebSocket();
                 }
             }
+            
+            // Save session state on terminal input
+            this.saveSessionState();
         });
 
         // Handle terminal resize with connection check
@@ -613,5 +663,121 @@ export default class TerminalManager {
         });
 
         return terminal;
+    }
+
+    saveSessionState() {
+        const sessionState = {
+            activeTabId: this.activeTabId,
+            tabCounter: this.tabCounter,
+            terminals: Array.from(this.terminals.entries()).map(([id, { tab, terminal }]) => {
+                // Get the serialize addon for this terminal
+                const addons = this.terminalAddons.get(terminal);
+                let serializedContent = null;
+                
+                // Use the SerializeAddon to serialize terminal content
+                if (addons && addons.serializeAddon) {
+                    try {
+                        // Get serialized content
+                        serializedContent = addons.serializeAddon.serialize();
+                        
+                        // Handle prompt lines (for both starship and standard prompts)
+                        if (serializedContent) {
+                            // Split into lines
+                            const lines = serializedContent.split(/\r?\n/);
+                            
+                            // Scan from the end to find where the actual content ends
+                            let lastContentLineIndex = -1;
+                            let seenNonPrompt = false;
+                            
+                            // Common prompt patterns
+                            const promptPatterns = [
+                                // Standard prompt patterns (user@host:path$, root@host:dir#, etc.)
+                                /^.*@.*[:~][#$>]\s*$/,
+                                // Bash/zsh default prompts
+                                /^[^@]+@[^:]+:[^$#>]+[#$>]\s*$/,
+                                // Simple $ or # or > prompts
+                                /^[$#>]\s*$/,
+                                // PS1 with directory
+                                /^\w+:\s*[\w/~]+[$#>]\s*$/,
+                                // Starship or other ANSI-colored prompts
+                                /^\s*\u001b\[\d+(?:;\d+)*m/,
+                                // ANSI input mode sequences
+                                /\u001b\[\?\d+[hl]/
+                            ];
+                            
+                            // Start from the end and work backwards
+                            for (let i = lines.length - 1; i >= 0; i--) {
+                                const line = lines[i].trimEnd();
+                                
+                                // Skip empty lines
+                                if (line === '') {
+                                    continue;
+                                }
+                                
+                                // Check if this line matches any prompt pattern
+                                const isPrompt = promptPatterns.some(pattern => pattern.test(line));
+                                
+                                if (!isPrompt) {
+                                    // Found actual terminal output
+                                    lastContentLineIndex = i;
+                                    seenNonPrompt = true;
+                                    break;
+                                }
+                            }
+                            
+                            // If we found actual content, keep everything up to that point
+                            if (seenNonPrompt) {
+                                // Keep content up to and including the last non-prompt line
+                                serializedContent = lines.slice(0, lastContentLineIndex + 1).join('\n');
+                                if (serializedContent.length > 0) {
+                                    serializedContent += '\n';
+                                }
+                            } else {
+                                // Terminal only contains prompts, so return empty string
+                                serializedContent = '';
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('Failed to serialize terminal content:', e);
+                    }
+                }
+                
+                return {
+                    id,
+                    name: tab.querySelector('span').textContent,
+                    content: serializedContent
+                };
+            })
+        };
+        this.storageManager.set('sessionState', sessionState);
+    }
+
+    loadSessionState() {
+        const sessionState = this.storageManager.get('sessionState');
+        if (sessionState && sessionState.terminals && sessionState.terminals.length > 0) {
+            // Create all terminals from saved state
+            sessionState.terminals.forEach(({ id, name, content }) => {
+                const tab = this.createTab(id);
+                tab.querySelector('span').textContent = name;
+                const container = this.createTerminalContainer(id);
+                const terminal = this.initTerminal(container, content);
+                this.terminals.set(id, { tab, container, terminal });
+            });
+            
+            // Calculate the tabCounter based on the highest ID + 1
+            const maxId = Math.max(...Array.from(this.terminals.keys()));
+            this.tabCounter = maxId + 1;
+            
+            // Restore active tab, but skip saving since we just loaded the state
+            if (sessionState.activeTabId !== null && this.terminals.has(sessionState.activeTabId)) {
+                this.activateTab(sessionState.activeTabId, true);
+            } else if (this.terminals.size > 0) {
+                // Fallback: activate the first terminal, but skip saving
+                this.activateTab(Array.from(this.terminals.keys())[0], true);
+            }
+        } else {
+            // No saved state, create default tab
+            this.handleNewTab();
+        }
     }
 }
