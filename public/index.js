@@ -4,6 +4,26 @@ document.addEventListener('DOMContentLoaded', () => {
     // Shared timeout variable for update process
     let updateTimeout;
 
+    // Add logout functionality
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            fetch(joinPath('logout'), {
+                method: 'POST',
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Logout failed:', error);
+            });
+        });
+    }
+
     // Theme toggle functionality
     function initThemeToggle() {
         const themeToggle = document.getElementById('themeToggle');

@@ -310,6 +310,29 @@ app.get(BASE_PATH + '/api/require-pin', (req, res) => {
     return res.json({ success: true, required: true });
 });
 
+// Logout endpoint
+app.post(BASE_PATH + '/logout', (req, res) => {
+    debugLog('Logout request received');
+    
+    // Clear the session
+    req.session.destroy();
+    
+    // Clear the PIN cookie
+    res.clearCookie(`${projectName}_PIN`, {
+        httpOnly: true,
+        secure: req.secure || (BASE_URL.startsWith('https') && NODE_ENV === 'production'),
+        sameSite: 'strict'
+    });
+
+    res.clearCookie('connect.sid', {
+        httpOnly: true,
+        secure: req.secure || (BASE_URL.startsWith('https') && NODE_ENV === 'production'),
+        sameSite: 'strict'
+    });
+    
+    res.json({ success: true });
+});
+
 // WebSocket server configuration
 const wss = new WebSocketServer({ 
     server,
