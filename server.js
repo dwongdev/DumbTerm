@@ -34,15 +34,15 @@ function debugLog(...args) {
 
 // Base URL configuration
 const BASE_PATH = (() => {
-    if (!process.env.BASE_URL) {
+    if (!BASE_URL) {
         debugLog('No BASE_URL set, using empty base path');
         return '';
     }
     try {
-        const url = new URL(process.env.BASE_URL);
+        const url = new URL(BASE_URL);
         const path = url.pathname.replace(/\/$/, ''); // Remove trailing slash
         debugLog('Base URL Configuration:', {
-            originalUrl: process.env.BASE_URL,
+            originalUrl: BASE_URL,
             extractedPath: path,
             protocol: url.protocol,
             hostname: url.hostname
@@ -50,7 +50,7 @@ const BASE_PATH = (() => {
         return path;
     } catch {
         // If BASE_URL is just a path (e.g. /app)
-        const path = process.env.BASE_URL.replace(/\/$/, '');
+        const path = BASE_URL.replace(/\/$/, '');
         debugLog('Using direct path as BASE_URL:', path);
         return path;
     }
@@ -415,7 +415,7 @@ function createTerminal(ws) {
             TERM: 'xterm-256color',
             COLORTERM: 'truecolor',
             LANG: 'en_US.UTF-8',
-            LC_ALL: 'en_US.UTF-8'
+            // LC_ALL: 'en_US.UTF-8'
         }
     });
 
