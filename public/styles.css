@@ -1,23 +1,55 @@
 /* NerdFont Integration */
 @font-face {
-    font-family: 'JetBrainsMono Nerd Font';
-    src: url('/assets/fonts/JetBrainsMonoNerdFontMono-Regular.ttf') format('truetype');
-    font-weight: normal;
+    font-family: 'FiraCode Nerd Font';
+    src: url('/assets/fonts/FiraCodeNerdFontMono-Light.ttf') format('truetype');
+    font-weight: 300;
     font-style: normal;
     font-display: swap;
 }
 
 @font-face {
-    font-family: 'JetBrainsMono Nerd Font';
-    src: url('/assets/fonts/JetBrainsMonoNerdFontMono-Bold.ttf') format('truetype');
-    font-weight: bold;
+    font-family: 'FiraCode Nerd Font';
+    src: url('/assets/fonts/FiraCodeNerdFontMono-Regular.ttf') format('truetype');
+    font-weight: 400;
     font-style: normal;
     font-display: swap;
 }
 
 @font-face {
-    font-family: 'JetBrainsMono Nerd Font';
-    src: url('/assets/fonts/JetBrainsMonoNerdFontMono-Italic.ttf') format('truetype');
+    font-family: 'FiraCode Nerd Font';
+    src: url('/assets/fonts/FiraCodeNerdFontMono-Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'FiraCode Nerd Font';
+    src: url('/assets/fonts/FiraCodeNerdFontMono-SemiBold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'FiraCode Nerd Font';
+    src: url('/assets/fonts/FiraCodeNerdFontMono-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'FiraCode Nerd Font';
+    src: url('/assets/fonts/FiraCodeNerdFontMono-Retina.ttf') format('truetype');
+    font-weight: 450;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'FiraCode Nerd Font';
+    src: url('/assets/fonts/FiraCodeNerdFont-Regular.ttf') format('truetype');
     font-weight: normal;
     font-style: italic;
     font-display: swap;
@@ -41,7 +73,7 @@
     --terminal-selection: rgba(33, 149, 243, 0.3);
     --terminal-border: rgba(0, 0, 0, 0.1);
     --btn-default:rgba(231, 229, 229, 0.5);
-    --terminal-font: 'JetBrainsMono Nerd Font', Menlo, Monaco, 'Courier New', monospace;
+    --terminal-font: 'FiraCode Nerd Font', Menlo, Monaco, 'Courier New', monospace;
     --tooltip-bg: rgba(0, 0, 0, 0.7);
     --tooltip-text: #fff;
     --accent-color: var(--primary);
