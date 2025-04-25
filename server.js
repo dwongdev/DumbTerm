@@ -177,7 +177,35 @@ const authMiddleware = (req, res, next) => {
     return res.redirect(BASE_PATH + '/login');
 };
 
-app.get(BASE_PATH + '/', [originValidationMiddleware, authMiddleware], (req, res) => {
+// Global middleware for origin validation and authentication
+app.use(BASE_PATH, (req, res, next) => {
+    // List of paths that should be publicly accessible
+    const publicPaths = [
+        '/login',
+        '/pin-length',
+        '/verify-pin',
+        '/config.js',
+        '/assets/',
+        '/fonts/',
+        '/styles.css',
+        '/manifest.json',
+        '/asset-manifest.json',
+        '/node_modules/@xterm/'
+    ];
+
+    // Check if the current path matches any of the public paths
+    if (publicPaths.some(path => req.path.startsWith(path))) {
+        return next();
+    }
+
+    // For all other paths, apply both origin validation and auth middleware
+    originValidationMiddleware(req, res, () => {
+        authMiddleware(req, res, next);
+    });
+});
+
+// Routes start here...
+app.get(BASE_PATH + '/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 

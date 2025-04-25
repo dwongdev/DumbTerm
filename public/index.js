@@ -248,19 +248,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     async function initialize() {
-        try {
-            // Check PIN requirements first
-            const pinResponse = await fetch(joinPath('api/require-pin'));
-            const pinData = await pinResponse.json();
-            
-            if (pinData.required && !pinData.success) {
-                window.location.href = joinPath('login');
-                return;
-            }
-        } catch (err) {
-            console.error('Error checking PIN requirement:', err);
-        }
-
         initThemeToggle();
         // Set site title
         const siteTitle = window.appConfig?.siteTitle || 'DumbTerm';
