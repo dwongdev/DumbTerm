@@ -534,7 +534,7 @@ server.listen(PORT, () => {
     debugLog('Server Configuration:', {
         port: PORT,
         basePath: BASE_PATH,
-        pinProtection: !!PIN,
+        pinProtection: isPinRequired,
         nodeEnv: NODE_ENV,
         debug: DEBUG,
         demoMode: DEMO_MODE

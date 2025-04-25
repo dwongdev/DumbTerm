@@ -39,7 +39,7 @@ function copyFolder(source, destination) {
     }
   });
   
-  console.log(`Copied from ${source} to ${destination}`);
+  // console.log(`Copied from ${source} to ${destination}`);
 }
 
 // Main function to copy xterm files
