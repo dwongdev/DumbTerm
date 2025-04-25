@@ -241,14 +241,16 @@ app.use('/node_modules/@xterm/', express.static(
 
 // Routes
 app.get(BASE_PATH + '/login', (req, res) => {
-    // If no PIN is set, redirect to index
+    // Check authentication first
+    if (req.session.authenticated) {
+        return res.redirect(BASE_PATH + '/');
+    }
+
+    // Then check if PIN is required
     if (!PIN || PIN.trim() === '') {
         return res.redirect(BASE_PATH + '/');
     }
 
-    if (req.session.authenticated) {
-        return res.redirect(BASE_PATH + '/');
-    }
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
