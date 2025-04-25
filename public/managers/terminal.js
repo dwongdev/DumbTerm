@@ -401,7 +401,7 @@ export default class TerminalManager {
 
         // If no tabs left, reset counter and create a new tab
         if (this.terminals.size === 0) {
-            this.tabCounter = 0; // Reset counter so the next tab will be Term1
+            this.tabCounter = 1; // Reset counter to 1 so the next tab will be Term1
             this.handleNewTab();
         } else {
             // Update tabCounter based on the highest terminal ID + 1
