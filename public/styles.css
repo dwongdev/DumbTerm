@@ -880,3 +880,36 @@ h2 {
         height: 32px;
     }
 }
+
+.demo-banner {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ff8383 100%);
+    color: white;
+    text-align: center;
+    padding: 0.75rem 1.5rem;
+    margin: 0 auto 1rem auto;
+    font-weight: 500;
+    font-size: 0.9rem;
+    animation: pulse 2s infinite;
+    box-shadow: 0 2px 8px rgba(255, 107, 107, 0.2);
+    border-radius: 8px;
+    position: relative;
+    z-index: 5;
+    width: fit-content;
+    max-width: 90%;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.demo-banner span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.85; }
+    100% { opacity: 1; }
+}

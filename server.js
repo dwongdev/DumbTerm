@@ -20,7 +20,7 @@ const DEBUG = process.env.DEBUG === 'TRUE';
 const NODE_ENV = process.env.NODE_ENV || 'production';
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 const DEMO_MODE = process.env.DEMO_MODE === 'true';
-const SITE_TITLE = DEMO_MODE ? `${process.env.SITE_TITLE || 'DumbTerm'} (DEMO MODE)` : (process.env.SITE_TITLE || 'DumbTerm');
+const SITE_TITLE = DEMO_MODE ? `${process.env.SITE_TITLE || 'DumbTerm'} (DEMO)` : (process.env.SITE_TITLE || 'DumbTerm');
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const ASSETS_DIR = path.join(PUBLIC_DIR, 'assets');
 const ptyModule = DEMO_MODE ? require('./scripts/demo/terminal') : pty;
@@ -218,7 +218,8 @@ app.get(BASE_PATH + '/config.js', (req, res) => {
         basePath: BASE_PATH,
         debug: DEBUG,
         siteTitle: SITE_TITLE,
-        isPinRequired: isPinRequired
+        isPinRequired: isPinRequired,
+        isDemoMode: DEMO_MODE
     }
 
     res.type('application/javascript').send(`

@@ -175,7 +175,6 @@ export default class TerminalManager {
                 this.handleTabClose(id);
             }
         });
-
         
         tabList.appendChild(tab);
         // Apply tooltips to both the tab itself and its close button

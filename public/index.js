@@ -254,8 +254,11 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('pageTitle').textContent = siteTitle;
         document.getElementById('siteTitle').textContent = siteTitle;
 
-        const isPinRequired = window.appConfig?.isPinRequired;
-        if (!isPinRequired) {
+        // Show demo banner if in demo mode
+        if (window.appConfig?.isDemoMode) {
+            document.getElementById('demo-banner').style.display = 'block';
+        }
+        if (!window.appConfig?.isPinRequired) {
             document.getElementById("logoutBtn").style.display = 'none';
         }
 
