@@ -836,6 +836,9 @@ export default class TerminalManager {
                     if (message.type === 'output') {
                         terminal.write(message.data);
                         
+                        // Ensure terminal scrolls to bottom when receiving output
+                        terminal.scrollToBottom();
+                        
                         // Save session state immediately after any terminal output
                         // This ensures we capture the current state including after clear commands
                         // Small delay to ensure terminal has fully processed the output

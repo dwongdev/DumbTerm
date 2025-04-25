@@ -187,6 +187,7 @@ main {
     font-feature-settings: "liga" 1, "calt" 1; /* Enable ligatures */
     padding-right: 15px; /* Match scrollbar width */
     padding-bottom: 5px;
+    /* overflow: hidden; */
 }
 
 .xterm-viewport {
@@ -674,6 +675,8 @@ h2 {
     margin-top: 0;
     border-radius: 12px; /* Round all corners */
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .terminals-container > div {
