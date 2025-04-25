@@ -23,6 +23,7 @@ const DEMO_MODE = process.env.DEMO_MODE === 'true';
 const SITE_TITLE = DEMO_MODE ? `${process.env.SITE_TITLE || 'DumbTerm'} (DEMO MODE)` : (process.env.SITE_TITLE || 'DumbTerm');
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const ASSETS_DIR = path.join(PUBLIC_DIR, 'assets');
+const ptyModule = DEMO_MODE ? require('./scripts/demo/terminal') : pty;
 
 generatePWAManifest(SITE_TITLE);
 
@@ -460,7 +461,6 @@ process.on('SIGTERM', () => {
 function createTerminal(ws) {
     // Create terminal process
     const shell = process.env.SHELL || (os.platform() === 'win32' ? 'powershell.exe' : 'bash');
-    const ptyModule = DEMO_MODE ? require('./scripts/demo/terminal') : pty;
     
     const term = ptyModule.spawn(shell, [], {
         name: 'xterm-256color',

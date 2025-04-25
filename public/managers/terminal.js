@@ -168,6 +168,13 @@ export default class TerminalManager {
             e.stopPropagation();
             this.handleTabClose(id);
         });
+        tab.addEventListener('auxclick', (e) => {
+            // Check if it's a middle click (button 1)
+            if (e.button === 1) {
+                e.preventDefault();
+                this.handleTabClose(id);
+            }
+        });
 
         
         tabList.appendChild(tab);
