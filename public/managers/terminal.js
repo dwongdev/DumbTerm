@@ -509,6 +509,12 @@ export default class TerminalManager {
             if (current) {
                 current.tab.classList.remove('active');
                 current.container.classList.remove('active');
+                
+                // Clear any existing search highlights in the previous tab
+                const currentAddons = this.terminalAddons.get(current.terminal);
+                if (currentAddons && currentAddons.searchAddon) {
+                    currentAddons.searchAddon.clearDecorations();
+                }
             }
         }
 
@@ -519,6 +525,19 @@ export default class TerminalManager {
             next.container.classList.add('active');
             next.terminal.focus();
             this.activeTabId = id;
+            
+            // Reapply search if search box exists and has a value
+            const searchBox = document.getElementById('terminal-search');
+            if (searchBox && searchBox.value) {
+                const nextAddons = this.terminalAddons.get(next.terminal);
+                if (nextAddons && nextAddons.searchAddon) {
+                    try {
+                        nextAddons.searchAddon.findNext(searchBox.value);
+                    } catch (e) {
+                        console.warn('Search failed:', e);
+                    }
+                }
+            }
             
             // Save session state when changing tabs, unless skipSaving is true
             if (!skipSaving) {
@@ -638,8 +657,19 @@ export default class TerminalManager {
             if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
                 e.preventDefault();
                 
+                const self = this;
+                const activeTerminal = self.terminals.get(self.activeTabId);
+                if (!activeTerminal) return;
+                
+                const activeTerminalAddons = self.terminalAddons.get(activeTerminal.terminal);
+                if (!activeTerminalAddons) return;
+                
+                const searchAddon = activeTerminalAddons.searchAddon;
+                if (!searchAddon) return;
+                
                 let searchBox = document.getElementById('terminal-search');
                 if (!searchBox) {
+                    // Create new search box
                     const searchContainer = document.createElement('div');
                     searchContainer.className = 'terminal-search-container';
                     searchContainer.innerHTML = `
@@ -657,6 +687,10 @@ export default class TerminalManager {
                     const nextBtn = searchContainer.querySelector('#search-next');
                     const closeBtn = searchContainer.querySelector('#search-close');
                     
+                    // Focus and select all text
+                    input.focus();
+                    input.select();
+                    
                     let searchTimeout;
                     input.addEventListener('input', () => {
                         const searchTerm = input.value;
@@ -665,7 +699,13 @@ export default class TerminalManager {
                         searchTimeout = setTimeout(() => {
                             if (searchTerm) {
                                 try {
-                                    searchAddon.findNext(searchTerm);
+                                    const currentTerminal = self.terminals.get(self.activeTabId);
+                                    if (currentTerminal) {
+                                        const currentAddons = self.terminalAddons.get(currentTerminal.terminal);
+                                        if (currentAddons && currentAddons.searchAddon) {
+                                            currentAddons.searchAddon.findNext(searchTerm);
+                                        }
+                                    }
                                 } catch (e) {
                                     console.warn('Search failed:', e);
                                 }
@@ -675,7 +715,13 @@ export default class TerminalManager {
                     
                     prevBtn.addEventListener('click', () => {
                         try {
-                            searchAddon.findPrevious(input.value);
+                            const currentTerminal = self.terminals.get(self.activeTabId);
+                            if (currentTerminal) {
+                                const currentAddons = self.terminalAddons.get(currentTerminal.terminal);
+                                if (currentAddons && currentAddons.searchAddon) {
+                                    currentAddons.searchAddon.findPrevious(input.value);
+                                }
+                            }
                         } catch (e) {
                             console.warn('Search failed:', e);
                         }
@@ -683,7 +729,13 @@ export default class TerminalManager {
                     
                     nextBtn.addEventListener('click', () => {
                         try {
-                            searchAddon.findNext(input.value);
+                            const currentTerminal = self.terminals.get(self.activeTabId);
+                            if (currentTerminal) {
+                                const currentAddons = self.terminalAddons.get(currentTerminal.terminal);
+                                if (currentAddons && currentAddons.searchAddon) {
+                                    currentAddons.searchAddon.findNext(input.value);
+                                }
+                            }
                         } catch (e) {
                             console.warn('Search failed:', e);
                         }
@@ -691,7 +743,10 @@ export default class TerminalManager {
                     
                     closeBtn.addEventListener('click', () => {
                         searchContainer.remove();
-                        terminal.focus();
+                        const currentTerminal = self.terminals.get(self.activeTabId);
+                        if (currentTerminal) {
+                            currentTerminal.terminal.focus();
+                        }
                     });
                     
                     input.addEventListener('keydown', (e) => {
@@ -699,10 +754,16 @@ export default class TerminalManager {
                             case 'Enter':
                                 e.preventDefault();
                                 try {
-                                    if (e.shiftKey) {
-                                        searchAddon.findPrevious(input.value);
-                                    } else {
-                                        searchAddon.findNext(input.value);
+                                    const currentTerminal = self.terminals.get(self.activeTabId);
+                                    if (currentTerminal) {
+                                        const currentAddons = self.terminalAddons.get(currentTerminal.terminal);
+                                        if (currentAddons && currentAddons.searchAddon) {
+                                            if (e.shiftKey) {
+                                                currentAddons.searchAddon.findPrevious(input.value);
+                                            } else {
+                                                currentAddons.searchAddon.findNext(input.value);
+                                            }
+                                        }
                                     }
                                 } catch (e) {
                                     console.warn('Search failed:', e);
@@ -710,7 +771,10 @@ export default class TerminalManager {
                                 break;
                             case 'Escape':
                                 searchContainer.remove();
-                                terminal.focus();
+                                const currentTerminal = self.terminals.get(self.activeTabId);
+                                if (currentTerminal) {
+                                    currentTerminal.terminal.focus();
+                                }
                                 e.preventDefault();
                                 break;
                         }
@@ -718,7 +782,9 @@ export default class TerminalManager {
                     
                     input.focus();
                 } else {
+                    // If search box already exists, focus and select all text
                     searchBox.focus();
+                    searchBox.select();
                 }
             }
         });
