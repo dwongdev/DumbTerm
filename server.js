@@ -59,12 +59,13 @@ const BASE_PATH = (() => {
 // Get the project name from package.json to use for the PIN environment variable
 const projectName = require('./package.json').name.toUpperCase().replace(/-/g, '_');
 const PIN = process.env[`${projectName}_PIN`];
+const isPinRequired = PIN && PIN.trim() !== '';
 
 // Log whether PIN protection is enabled
-if (!PIN || PIN.trim() === '') {
-    debugLog('PIN protection is disabled');
-} else {
+if (isPinRequired) {
     debugLog('PIN protection is enabled, PIN length:', PIN.length);
+} else {
+    debugLog('PIN protection is disabled');
 }
 
 // Brute force protection
@@ -212,12 +213,15 @@ app.get(BASE_PATH + '/', (req, res) => {
 // Serve config.js for frontend
 app.get(BASE_PATH + '/config.js', (req, res) => {
     debugLog('Serving config.js with basePath:', BASE_PATH);
+    const appConfig = {
+        basePath: BASE_PATH,
+        debug: DEBUG,
+        siteTitle: SITE_TITLE,
+        isPinRequired: isPinRequired
+    }
+
     res.type('application/javascript').send(`
-        window.appConfig = {
-            basePath: '${BASE_PATH}',
-            debug: ${DEBUG},
-            siteTitle: '${SITE_TITLE}'
-        };
+        window.appConfig = ${JSON.stringify(appConfig)};
     `);
 });
 

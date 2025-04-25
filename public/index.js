@@ -254,6 +254,11 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('pageTitle').textContent = siteTitle;
         document.getElementById('siteTitle').textContent = siteTitle;
 
+        const isPinRequired = window.appConfig?.isPinRequired;
+        if (!isPinRequired) {
+            document.getElementById("logoutBtn").style.display = 'none';
+        }
+
         // Initialize terminal manager only after DOM is fully loaded
         if (document.querySelector('.terminals-container')) {
             const terminalManager = new TerminalManager(isMacOS, setupToolTips);
