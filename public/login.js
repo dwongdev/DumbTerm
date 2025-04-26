@@ -164,7 +164,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const siteTitle = window.appConfig?.siteTitle || 'DumbTerm';
         document.getElementById('pageTitle').textContent = siteTitle;
         document.getElementById('siteTitle').textContent = siteTitle;
-        
+        // Show demo banner if in demo mode
+        if (window.appConfig?.isDemoMode) {
+            document.getElementById('demo-banner').style.display = 'block';
+        }
         initThemeToggle();
         setupPinInputs();
     }
