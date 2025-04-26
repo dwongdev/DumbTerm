@@ -1,6 +1,31 @@
 /* NerdFont Integration */
 @font-face {
     font-family: 'FiraCode Nerd Font';
+    src: url('/assets/fonts/FiraCodeNerdFontMono-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: block; /* Block render text until font loads */
+}
+
+@font-face {
+    font-family: 'FiraCode Nerd Font';
+    src: url('/assets/fonts/FiraCodeNerdFontMono-Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+    font-display: block;
+}
+
+@font-face {
+    font-family: 'FiraCode Nerd Font';
+    src: url('/assets/fonts/FiraCodeNerdFontMono-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: block;
+}
+
+/* Other weights can use swap strategy since they're less critical */
+@font-face {
+    font-family: 'FiraCode Nerd Font';
     src: url('/assets/fonts/FiraCodeNerdFontMono-Light.ttf') format('truetype');
     font-weight: 300;
     font-style: normal;
@@ -9,32 +34,8 @@
 
 @font-face {
     font-family: 'FiraCode Nerd Font';
-    src: url('/assets/fonts/FiraCodeNerdFontMono-Regular.ttf') format('truetype');
-    font-weight: 400;
-    font-style: normal;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'FiraCode Nerd Font';
-    src: url('/assets/fonts/FiraCodeNerdFontMono-Medium.ttf') format('truetype');
-    font-weight: 500;
-    font-style: normal;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'FiraCode Nerd Font';
     src: url('/assets/fonts/FiraCodeNerdFontMono-SemiBold.ttf') format('truetype');
     font-weight: 600;
-    font-style: normal;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'FiraCode Nerd Font';
-    src: url('/assets/fonts/FiraCodeNerdFontMono-Bold.ttf') format('truetype');
-    font-weight: 700;
     font-style: normal;
     font-display: swap;
 }

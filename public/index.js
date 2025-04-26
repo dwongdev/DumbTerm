@@ -4,6 +4,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Shared timeout variable for update process
     let updateTimeout;
 
+    async function waitForFonts() {
+        // Create a promise that resolves when fonts are loaded
+        const fontPromises = [
+            'FiraCode Nerd Font',
+        ].map(font => document.fonts.load(`1em "${font}"`));
+
+        try {
+            await Promise.all(fontPromises);
+        } catch (e) {
+            console.warn('Font loading error:', e);
+        }
+    }
+
     // Add logout functionality
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
@@ -262,7 +275,10 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById("logoutBtn").style.display = 'none';
         }
 
-        // Initialize terminal manager only after DOM is fully loaded
+        // Wait for fonts to load before initializing terminal
+        await waitForFonts();
+
+        // Initialize terminal manager only after fonts are loaded
         if (document.querySelector('.terminals-container')) {
             const terminalManager = new TerminalManager(isMacOS, setupToolTips);
         }
@@ -271,6 +287,6 @@ document.addEventListener('DOMContentLoaded', () => {
         setupToolTips(tooltips);
         registerServiceWorker();
     }
-    
-    initialize();
+
+    initialize().catch(console.error);
 });
