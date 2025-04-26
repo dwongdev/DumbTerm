@@ -188,7 +188,8 @@ main {
     font-feature-settings: "liga" 1, "calt" 1; /* Enable ligatures */
     padding-right: 15px; /* Match scrollbar width */
     padding-bottom: 5px;
-    /* overflow: hidden; */
+    position: relative;
+    top: -5px; /* Move terminal content up */
 }
 
 .xterm-viewport {
@@ -710,6 +711,7 @@ h2 {
     /* overflow: hidden !important; */
     position: absolute;
     inset: 0;
+    top: -5px; /* Move these components up to match */
 }
 
 .xterm-link-layer {
