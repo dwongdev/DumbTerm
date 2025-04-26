@@ -20,9 +20,10 @@ const DEBUG = process.env.DEBUG === 'TRUE';
 const NODE_ENV = process.env.NODE_ENV || 'production';
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 const DEMO_MODE = process.env.DEMO_MODE === 'true';
-const SITE_TITLE = DEMO_MODE ? `${process.env.SITE_TITLE || 'DumbTerm'} (DEMO MODE)` : (process.env.SITE_TITLE || 'DumbTerm');
+const SITE_TITLE = DEMO_MODE ? `${process.env.SITE_TITLE || 'DumbTerm'} (DEMO)` : (process.env.SITE_TITLE || 'DumbTerm');
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const ASSETS_DIR = path.join(PUBLIC_DIR, 'assets');
+const ptyModule = DEMO_MODE ? require('./scripts/demo/terminal') : pty;
 
 generatePWAManifest(SITE_TITLE);
 
@@ -59,12 +60,13 @@ const BASE_PATH = (() => {
 // Get the project name from package.json to use for the PIN environment variable
 const projectName = require('./package.json').name.toUpperCase().replace(/-/g, '_');
 const PIN = process.env[`${projectName}_PIN`];
+const isPinRequired = PIN && PIN.trim() !== '';
 
 // Log whether PIN protection is enabled
-if (!PIN || PIN.trim() === '') {
-    debugLog('PIN protection is disabled');
-} else {
+if (isPinRequired) {
     debugLog('PIN protection is enabled, PIN length:', PIN.length);
+} else {
+    debugLog('PIN protection is disabled');
 }
 
 // Brute force protection
@@ -177,19 +179,51 @@ const authMiddleware = (req, res, next) => {
     return res.redirect(BASE_PATH + '/login');
 };
 
-app.get(BASE_PATH + '/', [originValidationMiddleware, authMiddleware], (req, res) => {
+// Global middleware for origin validation and authentication
+app.use(BASE_PATH, (req, res, next) => {
+    // List of paths that should be publicly accessible
+    const publicPaths = [
+        '/login',
+        '/pin-length',
+        '/verify-pin',
+        '/config.js',
+        '/assets/',
+        '/fonts/',
+        '/styles.css',
+        '/manifest.json',
+        '/asset-manifest.json',
+        '/node_modules/@xterm/'
+    ];
+
+    // Check if the current path matches any of the public paths
+    if (publicPaths.some(path => req.path.startsWith(path))) {
+        return next();
+    }
+
+    // For all other paths, apply both origin validation and auth middleware
+    originValidationMiddleware(req, res, () => {
+        authMiddleware(req, res, next);
+    });
+});
+
+// Routes start here...
+app.get(BASE_PATH + '/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Serve config.js for frontend
 app.get(BASE_PATH + '/config.js', (req, res) => {
     debugLog('Serving config.js with basePath:', BASE_PATH);
+    const appConfig = {
+        basePath: BASE_PATH,
+        debug: DEBUG,
+        siteTitle: SITE_TITLE,
+        isPinRequired: isPinRequired,
+        isDemoMode: DEMO_MODE
+    }
+
     res.type('application/javascript').send(`
-        window.appConfig = {
-            basePath: '${BASE_PATH}',
-            debug: ${DEBUG},
-            siteTitle: '${SITE_TITLE}'
-        };
+        window.appConfig = ${JSON.stringify(appConfig)};
     `);
 });
 
@@ -209,14 +243,16 @@ app.use('/node_modules/@xterm/', express.static(
 
 // Routes
 app.get(BASE_PATH + '/login', (req, res) => {
-    // If no PIN is set, redirect to index
+    // Check authentication first
+    if (req.session.authenticated) {
+        return res.redirect(BASE_PATH + '/');
+    }
+
+    // Then check if PIN is required
     if (!PIN || PIN.trim() === '') {
         return res.redirect(BASE_PATH + '/');
     }
 
-    if (req.session.authenticated) {
-        return res.redirect(BASE_PATH + '/');
-    }
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
@@ -414,7 +450,7 @@ const heartbeatInterval = setInterval(() => {
             ws.terminate();
         }
     });
-}, 15000); // Check every 15 seconds instead of 30
+}, 15000); // Check every 15 seconds
 
 // Clean up interval on server shutdown
 process.on('SIGTERM', () => {
@@ -426,7 +462,6 @@ process.on('SIGTERM', () => {
 function createTerminal(ws) {
     // Create terminal process
     const shell = process.env.SHELL || (os.platform() === 'win32' ? 'powershell.exe' : 'bash');
-    const ptyModule = DEMO_MODE ? require('./scripts/demo/terminal') : pty;
     
     const term = ptyModule.spawn(shell, [], {
         name: 'xterm-256color',
@@ -438,7 +473,10 @@ function createTerminal(ws) {
             TERM: 'xterm-256color',
             COLORTERM: 'truecolor',
             LANG: 'en_US.UTF-8',
-            // LC_ALL: 'en_US.UTF-8'
+            // Force buffer flushing for better alternate buffer handling
+            STDBUF: 'L',
+            // Ensure proper handling of alternate buffer in applications
+            TERM_PROGRAM: 'xterm-256color'
         }
     });
 
@@ -461,14 +499,14 @@ function createTerminal(ws) {
         }
     });
 
-    // Handle terminal data
+    // Handle terminal data with control sequence filtering
     term.on('data', (data) => {
         if (ws.readyState === ws.OPEN) {
-            try {
-                ws.send(JSON.stringify({ type: 'output', data }));
-            } catch (error) {
-                debugLog('Error sending terminal output:', error);
-            }
+            // Raw send without any filtering - let the client handle buffer switches
+            ws.send(JSON.stringify({ 
+                type: 'output',
+                data: data
+            }));
         }
     });
 
@@ -502,7 +540,7 @@ server.listen(PORT, () => {
     debugLog('Server Configuration:', {
         port: PORT,
         basePath: BASE_PATH,
-        pinProtection: !!PIN,
+        pinProtection: isPinRequired,
         nodeEnv: NODE_ENV,
         debug: DEBUG,
         demoMode: DEMO_MODE

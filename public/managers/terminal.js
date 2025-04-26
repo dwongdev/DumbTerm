@@ -168,7 +168,13 @@ export default class TerminalManager {
             e.stopPropagation();
             this.handleTabClose(id);
         });
-
+        tab.addEventListener('auxclick', (e) => {
+            // Check if it's a middle click (button 1)
+            if (e.button === 1) {
+                e.preventDefault();
+                this.handleTabClose(id);
+            }
+        });
         
         tabList.appendChild(tab);
         // Apply tooltips to both the tab itself and its close button
@@ -401,7 +407,7 @@ export default class TerminalManager {
 
         // If no tabs left, reset counter and create a new tab
         if (this.terminals.size === 0) {
-            this.tabCounter = 0; // Reset counter so the next tab will be Term1
+            this.tabCounter = 1; // Reset counter to 1 so the next tab will be Term1
             this.handleNewTab();
         } else {
             // Update tabCounter based on the highest terminal ID + 1
@@ -509,6 +515,12 @@ export default class TerminalManager {
             if (current) {
                 current.tab.classList.remove('active');
                 current.container.classList.remove('active');
+                
+                // Clear any existing search highlights in the previous tab
+                const currentAddons = this.terminalAddons.get(current.terminal);
+                if (currentAddons && currentAddons.searchAddon) {
+                    currentAddons.searchAddon.clearDecorations();
+                }
             }
         }
 
@@ -519,6 +531,19 @@ export default class TerminalManager {
             next.container.classList.add('active');
             next.terminal.focus();
             this.activeTabId = id;
+            
+            // Reapply search if search box exists and has a value
+            const searchBox = document.getElementById('terminal-search');
+            if (searchBox && searchBox.value) {
+                const nextAddons = this.terminalAddons.get(next.terminal);
+                if (nextAddons && nextAddons.searchAddon) {
+                    try {
+                        nextAddons.searchAddon.findNext(searchBox.value);
+                    } catch (e) {
+                        console.warn('Search failed:', e);
+                    }
+                }
+            }
             
             // Save session state when changing tabs, unless skipSaving is true
             if (!skipSaving) {
@@ -564,13 +589,22 @@ export default class TerminalManager {
             cursorWidth: 1.5,
             letterSpacing: 0.5,
             lineHeight: 1.2,
+            // Add and modify these options
             windowOptions: {
-                setWinSize: true
+                setWinSize: true,
+                getWinSize: true
             },
             allowProposedApi: true,
             rightClickSelectsWord: true,
             convertEol: true,
-            termProgram: 'xterm-256color'
+            termProgram: 'xterm-256color',
+            // Add these new options for better control sequence handling
+            smoothScrollDuration: 0,
+            fastScrollModifier: 'alt',
+            fastScrollSensitivity: 5,
+            // Better handling of alternative screen buffer
+            altClickMovesCursor: true,
+            screenReaderMode: false
         });
 
         // Initialize addons
@@ -595,6 +629,11 @@ export default class TerminalManager {
         terminal.loadAddon(unicode11Addon);
         terminal.unicode.activeVersion = '11';
 
+        // Register custom handlers for problematic control sequences
+        terminal.parser.registerOscHandler(133, () => true); // Ignore OSC 133 (shell integration)
+        terminal.parser.registerCsiHandler({final: 'h'}, () => true); // Better handling of DECSET
+        terminal.parser.registerCsiHandler({final: 'l'}, () => true); // Better handling of DECRST
+        
         // Then load other addons
         terminal.loadAddon(fitAddon);
         terminal.loadAddon(webLinksAddon);
@@ -638,8 +677,19 @@ export default class TerminalManager {
             if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
                 e.preventDefault();
                 
+                const self = this;
+                const activeTerminal = self.terminals.get(self.activeTabId);
+                if (!activeTerminal) return;
+                
+                const activeTerminalAddons = self.terminalAddons.get(activeTerminal.terminal);
+                if (!activeTerminalAddons) return;
+                
+                const searchAddon = activeTerminalAddons.searchAddon;
+                if (!searchAddon) return;
+                
                 let searchBox = document.getElementById('terminal-search');
                 if (!searchBox) {
+                    // Create new search box
                     const searchContainer = document.createElement('div');
                     searchContainer.className = 'terminal-search-container';
                     searchContainer.innerHTML = `
@@ -657,6 +707,10 @@ export default class TerminalManager {
                     const nextBtn = searchContainer.querySelector('#search-next');
                     const closeBtn = searchContainer.querySelector('#search-close');
                     
+                    // Focus and select all text
+                    input.focus();
+                    input.select();
+                    
                     let searchTimeout;
                     input.addEventListener('input', () => {
                         const searchTerm = input.value;
@@ -665,7 +719,13 @@ export default class TerminalManager {
                         searchTimeout = setTimeout(() => {
                             if (searchTerm) {
                                 try {
-                                    searchAddon.findNext(searchTerm);
+                                    const currentTerminal = self.terminals.get(self.activeTabId);
+                                    if (currentTerminal) {
+                                        const currentAddons = self.terminalAddons.get(currentTerminal.terminal);
+                                        if (currentAddons && currentAddons.searchAddon) {
+                                            currentAddons.searchAddon.findNext(searchTerm);
+                                        }
+                                    }
                                 } catch (e) {
                                     console.warn('Search failed:', e);
                                 }
@@ -675,7 +735,13 @@ export default class TerminalManager {
                     
                     prevBtn.addEventListener('click', () => {
                         try {
-                            searchAddon.findPrevious(input.value);
+                            const currentTerminal = self.terminals.get(self.activeTabId);
+                            if (currentTerminal) {
+                                const currentAddons = self.terminalAddons.get(currentTerminal.terminal);
+                                if (currentAddons && currentAddons.searchAddon) {
+                                    currentAddons.searchAddon.findPrevious(input.value);
+                                }
+                            }
                         } catch (e) {
                             console.warn('Search failed:', e);
                         }
@@ -683,7 +749,13 @@ export default class TerminalManager {
                     
                     nextBtn.addEventListener('click', () => {
                         try {
-                            searchAddon.findNext(input.value);
+                            const currentTerminal = self.terminals.get(self.activeTabId);
+                            if (currentTerminal) {
+                                const currentAddons = self.terminalAddons.get(currentTerminal.terminal);
+                                if (currentAddons && currentAddons.searchAddon) {
+                                    currentAddons.searchAddon.findNext(input.value);
+                                }
+                            }
                         } catch (e) {
                             console.warn('Search failed:', e);
                         }
@@ -691,7 +763,10 @@ export default class TerminalManager {
                     
                     closeBtn.addEventListener('click', () => {
                         searchContainer.remove();
-                        terminal.focus();
+                        const currentTerminal = self.terminals.get(self.activeTabId);
+                        if (currentTerminal) {
+                            currentTerminal.terminal.focus();
+                        }
                     });
                     
                     input.addEventListener('keydown', (e) => {
@@ -699,10 +774,16 @@ export default class TerminalManager {
                             case 'Enter':
                                 e.preventDefault();
                                 try {
-                                    if (e.shiftKey) {
-                                        searchAddon.findPrevious(input.value);
-                                    } else {
-                                        searchAddon.findNext(input.value);
+                                    const currentTerminal = self.terminals.get(self.activeTabId);
+                                    if (currentTerminal) {
+                                        const currentAddons = self.terminalAddons.get(currentTerminal.terminal);
+                                        if (currentAddons && currentAddons.searchAddon) {
+                                            if (e.shiftKey) {
+                                                currentAddons.searchAddon.findPrevious(input.value);
+                                            } else {
+                                                currentAddons.searchAddon.findNext(input.value);
+                                            }
+                                        }
                                     }
                                 } catch (e) {
                                     console.warn('Search failed:', e);
@@ -710,7 +791,10 @@ export default class TerminalManager {
                                 break;
                             case 'Escape':
                                 searchContainer.remove();
-                                terminal.focus();
+                                const currentTerminal = self.terminals.get(self.activeTabId);
+                                if (currentTerminal) {
+                                    currentTerminal.terminal.focus();
+                                }
                                 e.preventDefault();
                                 break;
                         }
@@ -718,7 +802,9 @@ export default class TerminalManager {
                     
                     input.focus();
                 } else {
+                    // If search box already exists, focus and select all text
                     searchBox.focus();
+                    searchBox.select();
                 }
             }
         });
@@ -748,10 +834,19 @@ export default class TerminalManager {
             ws.onopen = () => {
                 clearTimeout(connectionTimeout);
                 reconnectAttempts = 0;
-                // terminal.writeln('Connected to terminal server...'); // add a message here on first connect
+
+                if (ws.readyState === WebSocket.OPEN) {                 
+                    // Force an initial resize to ensure proper dimensions
+                    setTimeout(() => {
+                        fitAddon.fit();
+                        ws.send(JSON.stringify({
+                            type: 'resize',
+                            cols: terminal.cols,
+                            rows: terminal.rows
+                        }));
+                    }, 100);
+                }
                 terminal.focus();
-                
-                // Start sending heartbeats
                 startHeartbeat();
             };
 
@@ -764,18 +859,34 @@ export default class TerminalManager {
                 ws.close();
             };
 
+            let isInAlternateBuffer = false;
+            
             ws.onmessage = (event) => {
                 try {
                     const message = JSON.parse(event.data);
                     if (message.type === 'output') {
+                        if (message.data.includes('\x1b[?1049h')) {
+                            // Entering alternate buffer (editor mode)
+                            terminal.altBuffer = true;
+                        } else if (message.data.includes('\x1b[?1049l')) {
+                            // Exiting alternate buffer (editor mode)
+                            terminal.altBuffer = false;
+                            // Force a save after exiting editor mode
+                            setTimeout(() => {
+                                self.saveSessionState();
+                            }, 100);
+                        }
+                        
+                        // Always write the data
                         terminal.write(message.data);
                         
-                        // Save session state immediately after any terminal output
-                        // This ensures we capture the current state including after clear commands
-                        // Small delay to ensure terminal has fully processed the output
-                        setTimeout(() => {
-                            self.saveSessionState();
-                        }, 1000);
+                        // Only save state if not in alternate buffer
+                        if (!terminal.altBuffer) {
+                            clearTimeout(self.saveTimeout);
+                            self.saveTimeout = setTimeout(() => {
+                                self.saveSessionState();
+                            }, 500);
+                        }
                     }
                 } catch (e) {
                     console.error('Error processing message:', e);
@@ -852,10 +963,14 @@ export default class TerminalManager {
         // Handle terminal resize with connection check
         terminal.onResize(size => {
             if (ws && ws.readyState === WebSocket.OPEN) {
+                // Ensure size values are integers and within reasonable bounds
+                const cols = Math.max(2, Math.min(500, Math.floor(size.cols)));
+                const rows = Math.max(2, Math.min(500, Math.floor(size.rows)));
+                
                 ws.send(JSON.stringify({
                     type: 'resize',
-                    cols: size.cols,
-                    rows: size.rows
+                    cols: cols,
+                    rows: rows
                 }));
             }
         });
@@ -920,6 +1035,11 @@ export default class TerminalManager {
     }
 
     saveSessionState() {
+        // Skip saving if terminal is in alternate buffer mode
+        if (this.isInAlternateBuffer) {
+            return;
+        }
+
         const sessionState = {
             activeTabId: this.activeTabId,
             tabCounter: this.tabCounter,
@@ -985,7 +1105,7 @@ export default class TerminalManager {
                     id,
                     name: tab.querySelector('span').textContent,
                     content: serializedContent,
-                    order: Array.from(this.terminals.keys()).indexOf(id) // Save the order
+                    order: Array.from(this.terminals.keys()).indexOf(id)
                 };
             })
         };

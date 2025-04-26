@@ -1,23 +1,56 @@
 /* NerdFont Integration */
 @font-face {
-    font-family: 'JetBrainsMono Nerd Font';
-    src: url('/assets/fonts/JetBrainsMonoNerdFontMono-Regular.ttf') format('truetype');
-    font-weight: normal;
+    font-family: 'FiraCode Nerd Font';
+    src: url('/assets/fonts/FiraCodeNerdFontMono-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: block; /* Block render text until font loads */
+}
+
+@font-face {
+    font-family: 'FiraCode Nerd Font';
+    src: url('/assets/fonts/FiraCodeNerdFontMono-Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+    font-display: block;
+}
+
+@font-face {
+    font-family: 'FiraCode Nerd Font';
+    src: url('/assets/fonts/FiraCodeNerdFontMono-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: block;
+}
+
+/* Other weights can use swap strategy since they're less critical */
+@font-face {
+    font-family: 'FiraCode Nerd Font';
+    src: url('/assets/fonts/FiraCodeNerdFontMono-Light.ttf') format('truetype');
+    font-weight: 300;
     font-style: normal;
     font-display: swap;
 }
 
 @font-face {
-    font-family: 'JetBrainsMono Nerd Font';
-    src: url('/assets/fonts/JetBrainsMonoNerdFontMono-Bold.ttf') format('truetype');
-    font-weight: bold;
+    font-family: 'FiraCode Nerd Font';
+    src: url('/assets/fonts/FiraCodeNerdFontMono-SemiBold.ttf') format('truetype');
+    font-weight: 600;
     font-style: normal;
     font-display: swap;
 }
 
 @font-face {
-    font-family: 'JetBrainsMono Nerd Font';
-    src: url('/assets/fonts/JetBrainsMonoNerdFontMono-Italic.ttf') format('truetype');
+    font-family: 'FiraCode Nerd Font';
+    src: url('/assets/fonts/FiraCodeNerdFontMono-Retina.ttf') format('truetype');
+    font-weight: 450;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'FiraCode Nerd Font';
+    src: url('/assets/fonts/FiraCodeNerdFont-Regular.ttf') format('truetype');
     font-weight: normal;
     font-style: italic;
     font-display: swap;
@@ -41,7 +74,7 @@
     --terminal-selection: rgba(33, 149, 243, 0.3);
     --terminal-border: rgba(0, 0, 0, 0.1);
     --btn-default:rgba(231, 229, 229, 0.5);
-    --terminal-font: 'JetBrainsMono Nerd Font', Menlo, Monaco, 'Courier New', monospace;
+    --terminal-font: 'FiraCode Nerd Font', Menlo, Monaco, 'Courier New', monospace;
     --tooltip-bg: rgba(0, 0, 0, 0.7);
     --tooltip-text: #fff;
     --accent-color: var(--primary);
@@ -155,6 +188,7 @@ main {
     font-feature-settings: "liga" 1, "calt" 1; /* Enable ligatures */
     padding-right: 15px; /* Match scrollbar width */
     padding-bottom: 5px;
+    /* overflow: hidden; */
 }
 
 .xterm-viewport {
@@ -642,6 +676,8 @@ h2 {
     margin-top: 0;
     border-radius: 12px; /* Round all corners */
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .terminals-container > div {
@@ -844,4 +880,37 @@ h2 {
         width: 32px;
         height: 32px;
     }
+}
+
+.demo-banner {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ff8383 100%);
+    color: white;
+    text-align: center;
+    padding: 0.75rem 1.5rem;
+    margin: 0 auto 1rem auto;
+    font-weight: 500;
+    font-size: 0.9rem;
+    animation: pulse 2s infinite;
+    box-shadow: 0 2px 8px rgba(255, 107, 107, 0.2);
+    border-radius: 8px;
+    position: relative;
+    z-index: 5;
+    width: fit-content;
+    max-width: 90%;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.demo-banner span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.85; }
+    100% { opacity: 1; }
 }

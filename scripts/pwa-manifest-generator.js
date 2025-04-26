@@ -26,9 +26,10 @@ function getFiles(dir, basePath = "/") {
 }
 
 function generateAssetManifest() {
+  console.log("Generating Asset manifest...");
   const assets = getFiles(PUBLIC_DIR);
   fs.writeFileSync(path.join(ASSETS_DIR, "asset-manifest.json"), JSON.stringify(assets, null, 2));
-  console.log("Asset manifest generated!", assets);
+  console.log("Asset manifest generated!");
 }
 
 function generatePWAManifest(siteTitle) {
@@ -59,7 +60,7 @@ function generatePWAManifest(siteTitle) {
   };
 
   fs.writeFileSync(path.join(ASSETS_DIR, "manifest.json"), JSON.stringify(pwaManifest, null, 2));
-  console.log("PWA manifest generated!", pwaManifest);
+  console.log("PWA manifest generated!");
 }
 
 module.exports = { generatePWAManifest };
