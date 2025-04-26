@@ -243,13 +243,20 @@ app.use('/node_modules/@xterm/', express.static(
 
 // Routes
 app.get(BASE_PATH + '/login', (req, res) => {
+    // Check if PIN is required
+    if (!PIN || PIN.trim() === '') {
+        return res.redirect(BASE_PATH + '/');
+    }
+
     // Check authentication first
     if (req.session.authenticated) {
         return res.redirect(BASE_PATH + '/');
     }
 
-    // Then check if PIN is required
-    if (!PIN || PIN.trim() === '') {
+
+    // Check if user is already authenticated by PIN
+    const pinCookie = req.cookies[`${projectName}_PIN`];
+    if (verifyPin(PIN, pinCookie)) {
         return res.redirect(BASE_PATH + '/');
     }
 
@@ -293,41 +300,46 @@ app.post(BASE_PATH + '/verify-pin', (req, res) => {
         return res.status(400).json({ error: 'Invalid PIN format' });
     }
 
-    // Add artificial delay to further prevent timing attacks
-    const delay = crypto.randomInt(50, 150);
-    setTimeout(() => {
-        if (verifyPin(PIN, pin)) {
-            debugLog('PIN verification successful');
-            // Reset attempts on successful login
-            resetAttempts(ip);
-            
-            // Set authentication in session
-            req.session.authenticated = true;
-            
-            // Set secure cookie
-            res.cookie(`${projectName}_PIN`, pin, {
-                httpOnly: true,
-                secure: req.secure || (BASE_URL.startsWith('https') && NODE_ENV === 'production'),
-                sameSite: 'strict',
-                maxAge: MAX_SESSION_AGE
-            });
-            
+    // Verify PIN first
+    const isPinValid = verifyPin(PIN, pin);
+    
+    if (isPinValid) {
+        debugLog('PIN verification successful');
+        // Reset attempts on successful login
+        resetAttempts(ip);
+        
+        // Set authentication in session immediately
+        req.session.authenticated = true;
+        
+        // Set secure cookie
+        res.cookie(`${projectName}_PIN`, pin, {
+            httpOnly: true,
+            secure: req.secure || (BASE_URL.startsWith('https') && NODE_ENV === 'production'),
+            sameSite: 'strict',
+            maxAge: MAX_SESSION_AGE
+        });
+        
+        // Add artificial delay before sending response
+        setTimeout(() => {
             // Redirect to main page on success
             res.redirect(BASE_PATH + '/');
-        } else {
-            debugLog('PIN verification failed - Invalid PIN');
-            // Record failed attempt
-            recordAttempt(ip);
-            
-            const attempts = loginAttempts.get(ip);
-            const attemptsLeft = MAX_ATTEMPTS - attempts.count;
-            
+        }, crypto.randomInt(50, 150));
+    } else {
+        debugLog('PIN verification failed - Invalid PIN');
+        // Record failed attempt
+        recordAttempt(ip);
+        
+        const attempts = loginAttempts.get(ip);
+        const attemptsLeft = MAX_ATTEMPTS - attempts.count;
+        
+        // Add artificial delay before sending error response
+        setTimeout(() => {
             res.status(401).json({ 
                 error: 'Invalid PIN',
                 attemptsLeft: Math.max(0, attemptsLeft)
             });
-        }
-    }, delay);
+        }, crypto.randomInt(50, 150));
+    }
 });
 
 app.get(BASE_PATH + '/api/require-pin', (req, res) => {
@@ -350,23 +362,28 @@ app.get(BASE_PATH + '/api/require-pin', (req, res) => {
 app.post(BASE_PATH + '/logout', (req, res) => {
     debugLog('Logout request received');
     
-    // Clear the session
-    req.session.destroy();
-    
-    // Clear the PIN cookie
-    res.clearCookie(`${projectName}_PIN`, {
+    const cookieOptions = {
         httpOnly: true,
         secure: req.secure || (BASE_URL.startsWith('https') && NODE_ENV === 'production'),
-        sameSite: 'strict'
-    });
-
-    res.clearCookie('connect.sid', {
-        httpOnly: true,
-        secure: req.secure || (BASE_URL.startsWith('https') && NODE_ENV === 'production'),
-        sameSite: 'strict'
-    });
+        sameSite: 'strict',
+        path: BASE_PATH || '/',  // Match the path used when setting cookies
+        expires: new Date(0),    // Immediately expire the cookie
+        maxAge: 0               // Belt and suspenders - also set maxAge to 0
+    };
     
-    res.json({ success: true });
+    // Clear both cookies with consistent options
+    res.clearCookie(`${projectName}_PIN`, cookieOptions);
+    res.clearCookie('connect.sid', cookieOptions);
+    
+    // Destroy the session and wait for it to be destroyed before sending response
+    req.session.destroy((err) => {
+        if (err) {
+            debugLog('Error destroying session:', err);
+            return res.status(500).json({ success: false, error: 'Failed to logout properly' });
+        }
+        debugLog('Session and cookies cleared successfully');
+        res.json({ success: true });
+    });
 });
 
 // WebSocket server configuration
