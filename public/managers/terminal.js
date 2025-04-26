@@ -589,13 +589,22 @@ export default class TerminalManager {
             cursorWidth: 1.5,
             letterSpacing: 0.5,
             lineHeight: 1.2,
+            // Add and modify these options
             windowOptions: {
-                setWinSize: true
+                setWinSize: true,
+                getWinSize: true
             },
             allowProposedApi: true,
             rightClickSelectsWord: true,
             convertEol: true,
-            termProgram: 'xterm-256color'
+            termProgram: 'xterm-256color',
+            // Add these new options for better control sequence handling
+            smoothScrollDuration: 0,
+            fastScrollModifier: 'alt',
+            fastScrollSensitivity: 5,
+            // Better handling of alternative screen buffer
+            altClickMovesCursor: true,
+            screenReaderMode: false
         });
 
         // Initialize addons
@@ -620,6 +629,11 @@ export default class TerminalManager {
         terminal.loadAddon(unicode11Addon);
         terminal.unicode.activeVersion = '11';
 
+        // Register custom handlers for problematic control sequences
+        terminal.parser.registerOscHandler(133, () => true); // Ignore OSC 133 (shell integration)
+        terminal.parser.registerCsiHandler({final: 'h'}, () => true); // Better handling of DECSET
+        terminal.parser.registerCsiHandler({final: 'l'}, () => true); // Better handling of DECRST
+        
         // Then load other addons
         terminal.loadAddon(fitAddon);
         terminal.loadAddon(webLinksAddon);
@@ -820,10 +834,19 @@ export default class TerminalManager {
             ws.onopen = () => {
                 clearTimeout(connectionTimeout);
                 reconnectAttempts = 0;
-                // terminal.writeln('Connected to terminal server...'); // add a message here on first connect
+
+                if (ws.readyState === WebSocket.OPEN) {                 
+                    // Force an initial resize to ensure proper dimensions
+                    setTimeout(() => {
+                        fitAddon.fit();
+                        ws.send(JSON.stringify({
+                            type: 'resize',
+                            cols: terminal.cols,
+                            rows: terminal.rows
+                        }));
+                    }, 100);
+                }
                 terminal.focus();
-                
-                // Start sending heartbeats
                 startHeartbeat();
             };
 
@@ -836,21 +859,34 @@ export default class TerminalManager {
                 ws.close();
             };
 
+            let isInAlternateBuffer = false;
+            
             ws.onmessage = (event) => {
                 try {
                     const message = JSON.parse(event.data);
                     if (message.type === 'output') {
+                        if (message.data.includes('\x1b[?1049h')) {
+                            // Entering alternate buffer (editor mode)
+                            terminal.altBuffer = true;
+                        } else if (message.data.includes('\x1b[?1049l')) {
+                            // Exiting alternate buffer (editor mode)
+                            terminal.altBuffer = false;
+                            // Force a save after exiting editor mode
+                            setTimeout(() => {
+                                self.saveSessionState();
+                            }, 100);
+                        }
+                        
+                        // Always write the data
                         terminal.write(message.data);
                         
-                        // Ensure terminal scrolls to bottom when receiving output
-                        terminal.scrollToBottom();
-                        
-                        // Save session state immediately after any terminal output
-                        // This ensures we capture the current state including after clear commands
-                        // Small delay to ensure terminal has fully processed the output
-                        setTimeout(() => {
-                            self.saveSessionState();
-                        }, 1000);
+                        // Only save state if not in alternate buffer
+                        if (!terminal.altBuffer) {
+                            clearTimeout(self.saveTimeout);
+                            self.saveTimeout = setTimeout(() => {
+                                self.saveSessionState();
+                            }, 1000);
+                        }
                     }
                 } catch (e) {
                     console.error('Error processing message:', e);
@@ -927,10 +963,14 @@ export default class TerminalManager {
         // Handle terminal resize with connection check
         terminal.onResize(size => {
             if (ws && ws.readyState === WebSocket.OPEN) {
+                // Ensure size values are integers and within reasonable bounds
+                const cols = Math.max(2, Math.min(500, Math.floor(size.cols)));
+                const rows = Math.max(2, Math.min(500, Math.floor(size.rows)));
+                
                 ws.send(JSON.stringify({
                     type: 'resize',
-                    cols: size.cols,
-                    rows: size.rows
+                    cols: cols,
+                    rows: rows
                 }));
             }
         });
@@ -995,6 +1035,11 @@ export default class TerminalManager {
     }
 
     saveSessionState() {
+        // Skip saving if terminal is in alternate buffer mode
+        if (this.isInAlternateBuffer) {
+            return;
+        }
+
         const sessionState = {
             activeTabId: this.activeTabId,
             tabCounter: this.tabCounter,
@@ -1060,7 +1105,7 @@ export default class TerminalManager {
                     id,
                     name: tab.querySelector('span').textContent,
                     content: serializedContent,
-                    order: Array.from(this.terminals.keys()).indexOf(id) // Save the order
+                    order: Array.from(this.terminals.keys()).indexOf(id)
                 };
             })
         };

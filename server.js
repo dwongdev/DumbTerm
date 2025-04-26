@@ -450,7 +450,7 @@ const heartbeatInterval = setInterval(() => {
             ws.terminate();
         }
     });
-}, 15000); // Check every 15 seconds instead of 30
+}, 15000); // Check every 15 seconds
 
 // Clean up interval on server shutdown
 process.on('SIGTERM', () => {
@@ -473,7 +473,10 @@ function createTerminal(ws) {
             TERM: 'xterm-256color',
             COLORTERM: 'truecolor',
             LANG: 'en_US.UTF-8',
-            // LC_ALL: 'en_US.UTF-8'
+            // Force buffer flushing for better alternate buffer handling
+            STDBUF: 'L',
+            // Ensure proper handling of alternate buffer in applications
+            TERM_PROGRAM: 'xterm-256color'
         }
     });
 
@@ -496,14 +499,14 @@ function createTerminal(ws) {
         }
     });
 
-    // Handle terminal data
+    // Handle terminal data with control sequence filtering
     term.on('data', (data) => {
         if (ws.readyState === ws.OPEN) {
-            try {
-                ws.send(JSON.stringify({ type: 'output', data }));
-            } catch (error) {
-                debugLog('Error sending terminal output:', error);
-            }
+            // Raw send without any filtering - let the client handle buffer switches
+            ws.send(JSON.stringify({ 
+                type: 'output',
+                data: data
+            }));
         }
     });
 
