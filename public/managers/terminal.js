@@ -885,7 +885,7 @@ export default class TerminalManager {
                             clearTimeout(self.saveTimeout);
                             self.saveTimeout = setTimeout(() => {
                                 self.saveSessionState();
-                            }, 1000);
+                            }, 500);
                         }
                     }
                 } catch (e) {
