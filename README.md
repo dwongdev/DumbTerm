@@ -2,7 +2,7 @@
 
 A stupidly simple web-based terminal emulator, with common tools and Starship enabled! 🚀
 
-![dumbterm-preview](https://github.com/user-attachments/assets/12f2174e-d8ae-4330-91a0-da211d784583)
+![dumbterm-preview](https://github.com/user-attachments/assets/45a4542f-7f69-4dcd-a6df-39e5231e3db2)
 
 ## Table of Contents
 - [Features](#features)
@@ -56,19 +56,19 @@ A stupidly simple web-based terminal emulator, with common tools and Starship en
 
 DumbTerm includes the following XTerm.js addons to enhance your terminal experience:
 
-| Addon | Version | Description |
-|-------|---------|-------------|
-| **@xterm/addon-attach** | ^0.11.0 | Easily attach a terminal to a WebSocket |
-| **@xterm/addon-canvas** | ^0.7.0 | Renderer that uses canvas to draw terminal content |
-| **@xterm/addon-clipboard** | ^0.1.0 | Clipboard integration for copy/paste support |
-| **@xterm/addon-fit** | ^0.10.0 | Automatically resize terminal to fit its container |
-| **@xterm/addon-image** | ^0.8.0 | Display images inline in the terminal |
-| **@xterm/addon-ligatures** | ^0.8.0 | Font ligatures support |
-| **@xterm/addon-search** | ^0.15.0 | Search text in the terminal buffer |
-| **@xterm/addon-serialize** | ^0.13.0 | Serialize terminal output to string or HTML |
-| **@xterm/addon-unicode11** | ^0.8.0 | Additional Unicode 11 character width support |
-| **@xterm/addon-web-links** | ^0.11.0 | Automatically hyperlink URLs in terminal |
-| **@xterm/addon-webgl** | ^0.18.0 | Renderer that uses WebGL for better performance |
+| Addon | Description |
+|-------|-------------|
+| **@xterm/addon-attach** | Attaches a terminal session to a websocket |
+| **@xterm/addon-canvas** | Renderer that uses canvas to draw terminal content (used as fallback after webgl) |
+| **@xterm/addon-clipboard** | Clipboard integration for copy/paste support |
+| **@xterm/addon-fit** | Automatically resize terminal to fit its container |
+| **@xterm/addon-image** | Display images inline in the terminal |
+| **@xterm/addon-ligatures** | Font ligatures support |
+| **@xterm/addon-search** | Search text in the terminal buffer |
+| **@xterm/addon-serialize** | Serialize terminal output to string or HTML |
+| **@xterm/addon-unicode11** | Additional Unicode 11 character width support |
+| **@xterm/addon-web-links** | Automatically hyperlink URLs in terminal |
+| **@xterm/addon-webgl** | Renderer that uses WebGL for better performance (default render method) |
 
 ## Quick Start
 
@@ -279,9 +279,9 @@ DumbTerm provides a comprehensive set of keyboard shortcuts for efficient termin
 
 We're dumb, but not stupid. Use a full-featured auth provider for production use.
 
-* https://github.com/goauthentik/authentik
+* https://github.com/goauthentik/authentik (More difficult to set up, but production ready)
 * https://github.com/authelia/authelia
-* https://github.com/steveiliop56/tinyauth (Easy docker compose integration)
+* https://github.com/steveiliop56/tinyauth (Easy with docker compose integration)
 
 ### Features
 
@@ -327,7 +327,7 @@ We're dumb, but not stupid. Use a full-featured auth provider for production use
 - Demo mode available for testing and demonstrations - simulated terminal (set DEMO_MODE=true)
 - Starship prompt provides a beautiful terminal experience with git status, command duration, etc.
 - Use the data directory to persist files between container restarts
-- Pre-installed utilities include: starship, nerdfonts, apt-utils, curl, wget, ssh, git, vim, nano, htop, net-tools, iputils-ping, fontconfig, unzip, locales.
+- Pre-installed utilities include: starship, nerdfonts, apt-utils, curl, wget, ssh, git, vim, nano, htop, net-tools, iputils-ping, traceroute, fontconfig, unzip, locales.
 
 ## Links
 
@@ -354,5 +354,6 @@ Made with ❤️ by DumbWare.io & [gitmotion](https://github.com/gitmotion)
 - **Join the Chaos:** [Discord](https://discord.gg/zJutzxWyq2) 💬
 
 ## Future Features
+- Additional authentication methods
 
 > Got an idea? Open an issue or submit a PR
