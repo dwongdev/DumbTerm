@@ -253,8 +253,8 @@ form {
     transform: translateY(-10%);
 }
 
-/* Theme toggle */
-#themeToggle, #logoutBtn {
+/* header-right buttons */
+#themeToggle, #logoutBtn, #search-open {
     /* position: absolute; */
     top: 1rem;
     right: 1rem;
@@ -271,11 +271,11 @@ form {
     transition: background-color var(--transition);
 }
 
-#themeToggle:hover, #logoutBtn:hover {
+#themeToggle:hover, #logoutBtn:hover, #search-open:hover {
     background: rgba(128, 128, 128, 0.1);
 }
 
-#themeToggle svg, #logoutBtn svg {
+#themeToggle svg, #logoutBtn svg, #search-open svg {
     width: 24px;
     height: 24px;
     stroke: var(--text);
@@ -426,8 +426,8 @@ h2 {
 /* Terminal search styling */
 .terminal-search-container {
     position: absolute;
-    top: 2rem;
-    right: 6rem;
+    top: 1.4rem;
+    right: 7rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
