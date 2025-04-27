@@ -41,6 +41,12 @@ export default class TerminalManager {
         // Load any saved sessions or create a default tab
         this.loadSessionState();
 
+        // Add search button click handler
+        const searchOpenBtn = document.getElementById('search-open');
+        if (searchOpenBtn) {
+            searchOpenBtn.addEventListener('click', () => this.openSearchBox());
+        }
+
         // Add keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             // Ignore shortcuts when in login page
@@ -91,6 +97,11 @@ export default class TerminalManager {
             else if (modifier && (e.key === '<' || e.key === ',')) {
                 e.preventDefault();
                 this.cycleToPreviousTab();
+            }
+            // Command/Control + F: Open search
+            else if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                e.preventDefault();
+                this.openSearchBox();
             }
         });
     }
@@ -1194,6 +1205,138 @@ export default class TerminalManager {
                     }, 100);
                 });
             }
+        }
+    }
+
+    // Function to handle opening the search box
+    openSearchBox() {
+        const activeTerminal = this.terminals.get(this.activeTabId);
+        if (!activeTerminal) return;
+        
+        const activeTerminalAddons = this.terminalAddons.get(activeTerminal.terminal);
+        if (!activeTerminalAddons) return;
+        
+        const searchAddon = activeTerminalAddons.searchAddon;
+        if (!searchAddon) return;
+        
+        let searchBox = document.getElementById('terminal-search');
+        if (!searchBox) {
+            // Create new search box
+            const searchContainer = document.createElement('div');
+            searchContainer.className = 'terminal-search-container';
+            searchContainer.innerHTML = `
+                <input type="text" id="terminal-search" placeholder="Search...">
+                <div class="search-buttons">
+                    <button id="search-prev">↑</button>
+                    <button id="search-next">↓</button>
+                    <button id="search-close">×</button>
+                </div>
+            `;
+            document.querySelector('.container').appendChild(searchContainer);
+            
+            const input = searchContainer.querySelector('#terminal-search');
+            const prevBtn = searchContainer.querySelector('#search-prev');
+            const nextBtn = searchContainer.querySelector('#search-next');
+            const closeBtn = searchContainer.querySelector('#search-close');
+            
+            // Focus and select all text
+            input.focus();
+            input.select();
+            
+            let searchTimeout;
+            input.addEventListener('input', () => {
+                const searchTerm = input.value;
+                // Debounce search to avoid performance issues
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    if (searchTerm) {
+                        try {
+                            const currentTerminal = this.terminals.get(this.activeTabId);
+                            if (currentTerminal) {
+                                const currentAddons = this.terminalAddons.get(currentTerminal.terminal);
+                                if (currentAddons && currentAddons.searchAddon) {
+                                    currentAddons.searchAddon.findNext(searchTerm);
+                                }
+                            }
+                        } catch (e) {
+                            console.warn('Search failed:', e);
+                        }
+                    }
+                }, 200);
+            });
+            
+            prevBtn.addEventListener('click', () => {
+                try {
+                    const currentTerminal = this.terminals.get(this.activeTabId);
+                    if (currentTerminal) {
+                        const currentAddons = this.terminalAddons.get(currentTerminal.terminal);
+                        if (currentAddons && currentAddons.searchAddon) {
+                            currentAddons.searchAddon.findPrevious(input.value);
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Search failed:', e);
+                }
+            });
+            
+            nextBtn.addEventListener('click', () => {
+                try {
+                    const currentTerminal = this.terminals.get(this.activeTabId);
+                    if (currentTerminal) {
+                        const currentAddons = this.terminalAddons.get(currentTerminal.terminal);
+                        if (currentAddons && currentAddons.searchAddon) {
+                            currentAddons.searchAddon.findNext(input.value);
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Search failed:', e);
+                }
+            });
+            
+            closeBtn.addEventListener('click', () => {
+                searchContainer.remove();
+                const currentTerminal = this.terminals.get(this.activeTabId);
+                if (currentTerminal) {
+                    currentTerminal.terminal.focus();
+                }
+            });
+            
+            input.addEventListener('keydown', (e) => {
+                switch(e.key) {
+                    case 'Enter':
+                        e.preventDefault();
+                        try {
+                            const currentTerminal = this.terminals.get(this.activeTabId);
+                            if (currentTerminal) {
+                                const currentAddons = this.terminalAddons.get(currentTerminal.terminal);
+                                if (currentAddons && currentAddons.searchAddon) {
+                                    if (e.shiftKey) {
+                                        currentAddons.searchAddon.findPrevious(input.value);
+                                    } else {
+                                        currentAddons.searchAddon.findNext(input.value);
+                                    }
+                                }
+                            }
+                        } catch (e) {
+                            console.warn('Search failed:', e);
+                        }
+                        break;
+                    case 'Escape':
+                        searchContainer.remove();
+                        const currentTerminal = this.terminals.get(this.activeTabId);
+                        if (currentTerminal) {
+                            currentTerminal.terminal.focus();
+                        }
+                        e.preventDefault();
+                        break;
+                }
+            });
+            
+            input.focus();
+        } else {
+            // If search box already exists, focus and select all text
+            searchBox.focus();
+            searchBox.select();
         }
     }
 }

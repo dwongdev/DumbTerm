@@ -67,7 +67,8 @@
     --border: #ccc;
     --shadow: 0 2px 4px rgba(0,0,0,0.1);
     --transition: 0.2s ease;
-    --terminal-bg: #FAFAFA;
+    --terminal-tabs-container: #f0f0f0;
+    --terminal-bg: #FCFCFC;
     --terminal-active:rgba(33, 149, 243, 0.8);
     --terminal-text: #2C2C2C;
     --terminal-cursor: gray;
@@ -88,7 +89,8 @@
     --text: white;
     --border: #404040;
     --shadow: 0 2px 4px rgba(0,0,0,0.2);
-    --terminal-bg: #1C1C1C;
+    --terminal-tabs-container: #101010;
+    --terminal-bg: #1F1F1F;
     --terminal-active:rgba(33, 149, 243, 0.5);
     --terminal-text: #E0E0E0;
     --terminal-cursor: gray;
@@ -251,8 +253,8 @@ form {
     transform: translateY(-10%);
 }
 
-/* Theme toggle */
-#themeToggle, #logoutBtn {
+/* header-right buttons */
+#themeToggle, #logoutBtn, #search-open {
     /* position: absolute; */
     top: 1rem;
     right: 1rem;
@@ -269,11 +271,11 @@ form {
     transition: background-color var(--transition);
 }
 
-#themeToggle:hover, #logoutBtn:hover {
+#themeToggle:hover, #logoutBtn:hover, #search-open:hover {
     background: rgba(128, 128, 128, 0.1);
 }
 
-#themeToggle svg, #logoutBtn svg {
+#themeToggle svg, #logoutBtn svg, #search-open svg {
     width: 24px;
     height: 24px;
     stroke: var(--text);
@@ -424,12 +426,12 @@ h2 {
 /* Terminal search styling */
 .terminal-search-container {
     position: absolute;
-    top: 1rem;
-    right: 4rem;
+    top: 1.4rem;
+    right: 7rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    background: var(--container);
+    background: var(--background);
     padding: 0.5rem;
     border-radius: 6px;
     box-shadow: var(--shadow);
@@ -758,7 +760,7 @@ h2 {
 
 /* Tabs container styling */
 .tabs-container {
-    background: var(--terminal-bg);
+    background: var(--terminal-tabs-container);
     border-radius: 12px; /* Rounded corners all around */
     padding: 8px 12px 2px;
     border: 1px solid var(--terminal-border);

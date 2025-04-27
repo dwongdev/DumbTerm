@@ -15,6 +15,7 @@ RUN apt-get update && apt-get install -y \
     fontconfig \
     unzip \
     locales \
+    traceroute \
     && rm -rf /var/lib/apt/lists/*
 
 # Configure locales
