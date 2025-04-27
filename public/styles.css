@@ -902,6 +902,11 @@ h2 {
         margin: 0;
     }
 
+    .terminal-search-container { 
+        top: 1rem;
+        right: 6rem;
+    }
+
     .demo-banner {
         padding: 0.5rem;
         margin: 0 auto 1rem auto;
@@ -945,6 +950,11 @@ h2 {
     #terminal {
         padding: 0.25rem;
         min-height: 200px;
+    }
+
+    .terminal-search-container { 
+        top: 1rem;
+        right: 0.7rem;
     }
 }
 
