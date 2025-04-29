@@ -4,6 +4,12 @@ A stupidly simple web-based terminal emulator, with common tools and Starship en
 
 ![dumbterm-preview](https://github.com/user-attachments/assets/45a4542f-7f69-4dcd-a6df-39e5231e3db2)
 
+## Use cases:
+* Build with docker: To create a sandboxed environment for testing scripts, code, applications, emulate a VPS, showcase examples and more. All without having to install dependencies on your local machine!
+* Build locally: To access your client's cli/terminal through your browser instead!
+* Self-hosting: Put behind a reverse proxy, auth provider (like authentik, authelia, etc), Cloudflare tunnels with application access rules, etc for secure external access.
+* Another alternative to web terminals such as ttyd, shellinabox, etc
+
 ## Table of Contents
 - [Features](#features)
 - [Supported XTerm Addons](#supported-xterm-addons)
