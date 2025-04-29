@@ -562,5 +562,5 @@ server.listen(PORT, () => {
         debug: DEBUG,
         demoMode: DEMO_MODE
     });
-    console.log(`Server running on port ${BASE_URL}`);
+    console.log(`Server running on: ${BASE_URL}`);
 });
