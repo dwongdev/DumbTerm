@@ -12,7 +12,6 @@ A stupidly simple web-based terminal emulator, with common tools and Starship en
 
 ## Table of Contents
 - [Features](#features)
-- [Supported XTerm Addons](#supported-xterm-addons)
 - [Quick Start](#quick-start)
   - [Prerequisites](#prerequisites)
   - [Option 1: Docker (For Dummies)](#option-1-docker-for-dummies)
@@ -31,6 +30,7 @@ A stupidly simple web-based terminal emulator, with common tools and Starship en
 - [Technical Details](#technical-details)
   - [Stack](#stack)
   - [Dependencies](#dependencies)
+  - [Supported XTerm Addons](#supported-xterm-addons)
 - [Usage](#usage)
 - [Links](#links)
 - [Contributing](#contributing)
@@ -57,24 +57,6 @@ A stupidly simple web-based terminal emulator, with common tools and Starship en
   - Terminal history persistence across sessions
 - 📱 PWA Support for mobile and desktop
 - ⚡ XTerm.js for fast terminal rendering
-
-## Supported XTerm Addons
-
-DumbTerm includes the following XTerm.js addons to enhance your terminal experience:
-
-| Addon | Description |
-|-------|-------------|
-| **@xterm/addon-attach** | Attaches a terminal session to a websocket |
-| **@xterm/addon-canvas** | Renderer that uses canvas to draw terminal content (used as fallback after webgl) |
-| **@xterm/addon-clipboard** | Clipboard integration for copy/paste support |
-| **@xterm/addon-fit** | Automatically resize terminal to fit its container |
-| **@xterm/addon-image** | Display images inline in the terminal |
-| **@xterm/addon-ligatures** | Font ligatures support |
-| **@xterm/addon-search** | Search text in the terminal buffer |
-| **@xterm/addon-serialize** | Serialize terminal output to string or HTML |
-| **@xterm/addon-unicode11** | Additional Unicode 11 character width support |
-| **@xterm/addon-web-links** | Automatically hyperlink URLs in terminal |
-| **@xterm/addon-webgl** | Renderer that uses WebGL for better performance (default render method) |
 
 ## Quick Start
 
@@ -324,6 +306,24 @@ We're dumb, but not stupid. Use a full-featured auth provider for production use
 * express-session: Session management
 * cors: security for cross-origin requests
 <!-- * helmet: Security middleware -->
+
+### Supported XTerm Addons
+
+DumbTerm includes the following XTerm.js addons to enhance your terminal experience:
+
+| Addon | Description |
+|-------|-------------|
+| **@xterm/addon-attach** | Attaches a terminal session to a websocket |
+| **@xterm/addon-canvas** | Renderer that uses canvas to draw terminal content (used as fallback after webgl) |
+| **@xterm/addon-clipboard** | Clipboard integration for copy/paste support |
+| **@xterm/addon-fit** | Automatically resize terminal to fit its container |
+| **@xterm/addon-image** | Display images inline in the terminal |
+| **@xterm/addon-ligatures** | Font ligatures support |
+| **@xterm/addon-search** | Search text in the terminal buffer |
+| **@xterm/addon-serialize** | Serialize terminal output to string or HTML |
+| **@xterm/addon-unicode11** | Additional Unicode 11 character width support |
+| **@xterm/addon-web-links** | Automatically hyperlink URLs in terminal |
+| **@xterm/addon-webgl** | Renderer that uses WebGL for better performance (default render method) |
 
 ## Usage
 
