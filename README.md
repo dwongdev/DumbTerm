@@ -74,7 +74,7 @@ A stupidly simple web-based terminal emulator, with common tools and Starship en
 
 ### Option 1: Docker (For Dummies)
 
-* Docker method uses a Debian Bookwoorm-based container with a pre-installed terminal environment.
+* Docker method uses a pre-installed Debian Bullseye-based container/environment.
 
 ```bash
 # Pull and run with one command
@@ -296,7 +296,7 @@ We're dumb, but not stupid. Use a full-featured auth provider for production use
 
 * **Backend**: Node.js (>=20.0.0) with Express
 * **Frontend**: XTerm.js for terminal emulation
-* **Container**: Docker with Debian Bookworm base
+* **Container**: Docker with Debian Bullseye base
 * **Terminal**: node-pty for process spawning
 * **Communication**: WebSockets for real-time terminal I/O
 * **Security**: cors for cross-origin requests

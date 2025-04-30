@@ -1,4 +1,4 @@
-FROM node:20-bookworm-slim
+FROM node:20-bullseye-slim
 
 # Install additional terminal utilities and prerequisites
 RUN apt-get update && apt upgrade -y && apt-get install -y \
