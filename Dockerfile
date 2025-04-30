@@ -1,7 +1,7 @@
 FROM node:20-bullseye
 
 # Install additional terminal utilities and prerequisites
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt upgrade -y && apt-get install -y \
     apt-utils \
     curl \
     wget \
