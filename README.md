@@ -4,6 +4,13 @@ A stupidly simple web-based terminal emulator, with common tools and Starship en
 
 ![dumbterm-preview](https://github.com/user-attachments/assets/45a4542f-7f69-4dcd-a6df-39e5231e3db2)
 
+- Access your terminal from any device with a web browser
+- Execute commands just like in a native terminal
+- Starship prompt provides a beautiful terminal experience with git status, command duration, etc.
+- PIN protection (recommended) prevents unauthorized access
+- Use the data directory to persist files between container restarts
+- Demo mode available for testing and demonstrations - simulated terminal (set DEMO_MODE=true)
+
 ## Use cases:
 * Build with docker: To create a sandboxed environment for testing scripts, code, applications, emulate a VPS, showcase examples and more. All without having to install dependencies on your local machine!
 * Build locally: To access your client's cli/terminal through your browser instead!
@@ -31,7 +38,6 @@ A stupidly simple web-based terminal emulator, with common tools and Starship en
   - [Stack](#stack)
   - [Dependencies](#dependencies)
   - [Supported XTerm Addons](#supported-xterm-addons)
-- [Usage](#usage)
 - [Links](#links)
 - [Contributing](#contributing)
 - [Check Us Out](#-check-us-out)
@@ -43,7 +49,7 @@ A stupidly simple web-based terminal emulator, with common tools and Starship en
 - 🌙 Dark mode support
 - 📱 Responsive design for mobile and desktop
 - 🐳 Docker support (Debian-based container)
-- 🔧 Pre-installed utilities: starship, nerdfonts, wget, curl, ssh, git, vim, nano, htop, unzip and more.
+- 🔧 Pre-installed utilities: starship, nerdfonts, apt-utils, curl, wget, ssh, git, vim, nano, htop, net-tools, iputils-ping, traceroute, fontconfig, unzip, locales.
 - 🔒 Optional PIN protection (numeric)
 - ✨ Starship prompt integration for beautiful terminal experience
 - 🔍 Terminal search functionality (`ctrl+f` or `cmd+f`)
@@ -324,16 +330,6 @@ DumbTerm includes the following XTerm.js addons to enhance your terminal experie
 | **@xterm/addon-unicode11** | Additional Unicode 11 character width support |
 | **@xterm/addon-web-links** | Automatically hyperlink URLs in terminal |
 | **@xterm/addon-webgl** | Renderer that uses WebGL for better performance (default render method) |
-
-## Usage
-
-- Access your terminal from any device with a web browser
-- Execute commands just like in a native terminal
-- PIN protection (recommended) prevents unauthorized access
-- Demo mode available for testing and demonstrations - simulated terminal (set DEMO_MODE=true)
-- Starship prompt provides a beautiful terminal experience with git status, command duration, etc.
-- Use the data directory to persist files between container restarts
-- Pre-installed utilities include: starship, nerdfonts, apt-utils, curl, wget, ssh, git, vim, nano, htop, net-tools, iputils-ping, traceroute, fontconfig, unzip, locales.
 
 ## Links
 
