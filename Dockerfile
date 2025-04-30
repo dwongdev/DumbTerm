@@ -1,4 +1,4 @@
-FROM node:20-bullseye
+FROM node:20-bookworm-slim
 
 # Install additional terminal utilities and prerequisites
 RUN apt-get update && apt upgrade -y && apt-get install -y \
@@ -16,6 +16,8 @@ RUN apt-get update && apt upgrade -y && apt-get install -y \
     unzip \
     locales \
     traceroute \
+    build-essential \
+    python3 \
     && rm -rf /var/lib/apt/lists/*
 
 # Configure locales
