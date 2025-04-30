@@ -1,7 +1,7 @@
 {
   "name": "dumbterm",
   "version": "1.0.0",
-  "description": "A stupidly simple web-based terminal emulator.",
+  "description": "A stupidly simple web-based terminal emulator, with common tools and Starship enabled (via Docker)! 🚀",
   "main": "server.js",
   "scripts": {
     "start": "npm run copy-xterm && node server.js",
