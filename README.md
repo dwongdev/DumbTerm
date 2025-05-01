@@ -348,7 +348,7 @@ See Development Guide for local setup and guidelines.
 
 ---
 
-Made with ❤️ by DumbWare.io & [gitmotion](https://github.com/gitmotion)
+Made with ❤️ by [DumbWareio](https://github.com/dumbwareio) & [gitmotion](https://github.com/gitmotion)
 
 ## 🌐 Check Us Out
 - **Website:** [dumbware.io](https://www.dumbware.io/)
