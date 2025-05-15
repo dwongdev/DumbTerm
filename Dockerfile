@@ -1,7 +1,7 @@
 FROM node:20-bullseye-slim
 
 # Install additional terminal utilities and prerequisites
-RUN apt-get update && apt upgrade -y && apt-get install -y --fix-missing \
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --fix-missing \
     apt-utils \
     curl \
     wget \
@@ -28,34 +28,32 @@ RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && \
 # Set environment variables for locale
 ENV LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
-    LC_ALL=en_US.UTF-8
+    LC_ALL=en_US.UTF-8 \
+    SHELL=/bin/bash
 
-# Install Starship
+    # Install Starship
 RUN curl -sS https://starship.rs/install.sh | sh -s -- --yes
-
 WORKDIR /app
 
-# Copy package files
+# Copy package files first for better layer caching
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci
+RUN npm ci --production && \
+    npm cache clean --force
 
-# Copy entrypoint script first and set permissions
+# Copy entrypoint script and set permissions
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
-
-# Copy application files
-COPY . .
 
 # Create data directory
 RUN mkdir -p data
 
+# Copy application files
+COPY . .
+
 # Build node-pty and copy xterm files
 RUN npm run copy-xterm
-
-# Set bash as the default shell
-ENV SHELL=/bin/bash
 
 # Expose port
 EXPOSE 3000
