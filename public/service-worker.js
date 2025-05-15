@@ -102,8 +102,7 @@ async function checkCacheVersion() {
     
     // Find any existing DumbTerm cache - support both formats: DUMBTERM_PWA_CACHE_V* and DUMBTERM_CACHE_V*
     const existingCache = keys.find(key => key === CACHE_NAME) || 
-                         keys.find(key => key.startsWith('DUMBTERM_') && 
-                                        key.includes('_CACHE_') || key.includes('V'));
+                         keys.find(key => key.startsWith('DUMBTERM_CACHE'));
     
     // Extract version from cache name
     let existingVersion = null;
@@ -119,7 +118,7 @@ async function checkCacheVersion() {
     // Check for old versions - be flexible with the cache naming format
     const oldCaches = keys.filter(key => 
         key !== CACHE_NAME && key.startsWith('DUMBTERM_') && 
-        key.includes('_CACHE_') || key.includes('V')
+        (key.includes('_CACHE_') || key.includes('V'))
     );
     
     console.log(
