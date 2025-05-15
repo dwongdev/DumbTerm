@@ -25,7 +25,7 @@ const APP_VERSION = require('./package.json').version;
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const ASSETS_DIR = path.join(PUBLIC_DIR, 'assets');
 const ptyModule = DEMO_MODE ? require('./scripts/demo/terminal') : pty;
-const CACHE_NAME = `DUMBTERM_CACHE_${APP_VERSION}`;
+const CACHE_NAME = `DUMBTERM_CACHE_V${APP_VERSION}`;
 
 generatePWAManifest(SITE_TITLE);
 
