@@ -60,12 +60,12 @@ jobs:
           # Add branch-specific tags
           if [ "${{ github.ref }}" = "refs/heads/main" ]; then
             echo "ADDITIONAL_TAG=${{ env.DOCKER_IMAGE }}:latest" >> $GITHUB_OUTPUT
-            echo "Using tags: ${{ env.DOCKER_IMAGE }}:${{ steps.package_version.outputs.VERSION }}, ${{ env.DOCKER_IMAGE }}:latest"
+            echo "Using tags: ${{ steps.package_version.outputs.VERSION_TAG }}, ${{ env.DOCKER_IMAGE }}:latest"
           elif [ "${{ github.ref }}" = "refs/heads/testing" ]; then
             echo "ADDITIONAL_TAG=${{ env.DOCKER_IMAGE }}:testing" >> $GITHUB_OUTPUT
-            echo "Using tags: ${{ env.DOCKER_IMAGE }}:${{ steps.package_version.outputs.VERSION }}, ${{ env.DOCKER_IMAGE }}:testing"
+            echo "Using tags: ${{ steps.package_version.outputs.VERSION_TAG }}, ${{ env.DOCKER_IMAGE }}:testing"
           else
-            echo "Using tag: ${{ env.DOCKER_IMAGE }}:${{ steps.package_version.outputs.VERSION }}"
+            echo "Using tag: ${{ steps.package_version.outputs.VERSION_TAG }}"
           fi
 
       - name: Build and Push Multi-Platform Image
@@ -75,7 +75,7 @@ jobs:
           platforms: ${{ env.PLATFORMS }}
           push: true
           tags: |
-            ${{ env.DOCKER_IMAGE }}:${{ steps.package_version.outputs.VERSION }}
+            ${{ steps.package_version.outputs.VERSION_TAG }}
             ${{ steps.docker_meta.outputs.ADDITIONAL_TAG }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
