@@ -593,7 +593,7 @@ export default class TerminalManager {
                 brightWhite: '#FFFFFF'
             },
             allowTransparency: true,
-            macOptionIsMeta: true,
+            macOptionIsMeta: false,
             scrollback: 5000,
             minimumContrastRatio: 50,
             cursorStyle: 'block',
