@@ -36,15 +36,12 @@ async function getAppConfig() {
  */
 async function initializeVersion() {
     console.log("Initializing service worker version...");
-    
     try {
-        // 1. First try URL parameter (highest priority)
-        const urlVersion = new URL(self.location.href).searchParams.get('v');
-        if (urlVersion && urlVersion !== "1.0.0") {
-            console.log(`Found version in URL: ${urlVersion}`);
-            CACHE_VERSION = urlVersion;
+        const { currentCacheExists, existingVersion } = await checkCacheVersion();
+        if (currentCacheExists && existingVersion) {
+            CACHE_VERSION = existingVersion;
             CACHE_NAME = `DUMBTERM_CACHE_V${CACHE_VERSION}`; // Fallback format
-            return CACHE_VERSION;
+            return existingVersion;
         }
         
         // 2. Try getting from config.js (second priority)
@@ -117,8 +114,8 @@ async function checkCacheVersion() {
     
     // Check for old versions - be flexible with the cache naming format
     const oldCaches = keys.filter(key => 
-        key !== CACHE_NAME && key.startsWith('DUMBTERM_') && 
-        (key.includes('_CACHE_') || key.includes('V'))
+        key !== CACHE_NAME && (key.startsWith('DUMBTERM_') && 
+        ((key.includes('_CACHE_') || key.includes('PWA_CACHE')) && key.includes('V'))) 
     );
     
     console.log(
