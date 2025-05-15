@@ -54,14 +54,19 @@ jobs:
       - name: Set Docker tags
         id: docker_meta
         run: |
-          TAGS="${{ env.DOCKER_IMAGE }}:${{ steps.package_version.outputs.VERSION }}"
+          # Always add the version tag
+          echo "VERSION_TAG=${{ env.DOCKER_IMAGE }}:${{ steps.package_version.outputs.VERSION }}" >> $GITHUB_OUTPUT
+          
+          # Add branch-specific tags
           if [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            TAGS+=" ${{ env.DOCKER_IMAGE }}:latest"
+            echo "ADDITIONAL_TAG=${{ env.DOCKER_IMAGE }}:latest" >> $GITHUB_OUTPUT
+            echo "Using tags: ${{ env.DOCKER_IMAGE }}:${{ steps.package_version.outputs.VERSION }}, ${{ env.DOCKER_IMAGE }}:latest"
           elif [ "${{ github.ref }}" = "refs/heads/testing" ]; then
-            TAGS+=" ${{ env.DOCKER_IMAGE }}:testing"
+            echo "ADDITIONAL_TAG=${{ env.DOCKER_IMAGE }}:testing" >> $GITHUB_OUTPUT
+            echo "Using tags: ${{ env.DOCKER_IMAGE }}:${{ steps.package_version.outputs.VERSION }}, ${{ env.DOCKER_IMAGE }}:testing"
+          else
+            echo "Using tag: ${{ env.DOCKER_IMAGE }}:${{ steps.package_version.outputs.VERSION }}"
           fi
-          echo "TAGS=$TAGS" >> $GITHUB_ENV
-          echo "Tags to be used: $TAGS"
 
       - name: Build and Push Multi-Platform Image
         uses: docker/build-push-action@v5
@@ -69,7 +74,9 @@ jobs:
           context: .
           platforms: ${{ env.PLATFORMS }}
           push: true
-          tags: ${{ env.TAGS }}
+          tags: |
+            ${{ env.DOCKER_IMAGE }}:${{ steps.package_version.outputs.VERSION }}
+            ${{ steps.docker_meta.outputs.ADDITIONAL_TAG }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           provenance: false
