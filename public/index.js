@@ -187,7 +187,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Include cacheName if available in config
         if (window.appConfig?.cacheName) {
             message.cacheName = window.appConfig.cacheName;
-            console.log(`Including cacheName in message to service worker: ${window.appConfig.cacheName}`);
         }
         
         // Try to send to the controller if it exists
@@ -615,10 +614,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Wait for fonts to load
         await waitForFonts();
 
-        // Initialize terminal if needed
-        if (document.querySelector('.terminals-container')) {
-            const terminalManager = new TerminalManager(isMacOS, setupToolTips);
-        }
+        // Initialize terminal
+        const terminalManager = new TerminalManager(isMacOS, setupToolTips);
 
         // Set up tooltips
         const tooltips = document.querySelectorAll('[data-tooltip]');

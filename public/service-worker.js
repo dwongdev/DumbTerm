@@ -68,7 +68,7 @@ async function initializeVersion() {
             } else if (appConfig.version) {
                 console.log(`Found version in config.js: ${appConfig.version}`);
                 CACHE_VERSION = appConfig.version;
-                CACHE_NAME = `DUMBTERM_CACHE_V${CACHE_VERSION}`;
+                CACHE_NAME = appConfig.cacheName || `DUMBTERM_CACHE_V${CACHE_VERSION}`; // Fallback format
                 return CACHE_VERSION;
             }
         }
@@ -103,7 +103,7 @@ async function checkCacheVersion() {
     // Find any existing DumbTerm cache - support both formats: DUMBTERM_PWA_CACHE_V* and DUMBTERM_CACHE_V*
     const existingCache = keys.find(key => key === CACHE_NAME) || 
                          keys.find(key => key.startsWith('DUMBTERM_') && 
-                                        key.includes('_CACHE_V'));
+                                        key.includes('_CACHE_') || key.includes('V'));
     
     // Extract version from cache name
     let existingVersion = null;
@@ -119,7 +119,7 @@ async function checkCacheVersion() {
     // Check for old versions - be flexible with the cache naming format
     const oldCaches = keys.filter(key => 
         key !== CACHE_NAME && key.startsWith('DUMBTERM_') && 
-        key.includes('_CACHE_V')
+        key.includes('_CACHE_') || key.includes('V')
     );
     
     console.log(
@@ -432,8 +432,8 @@ async function handleSetVersion(version, cacheName) {
             // Try to get cache name from config as fallback
             try {
                 const appConfig = await getAppConfig();
-                if (appConfig && appConfig.cacheName) {
-                    CACHE_NAME = appConfig.cacheName;
+                if (appConfig) {
+                    CACHE_NAME = appConfig.cacheName || `DUMBTERM_CACHE_V${CACHE_VERSION}`;
                     console.log(`Using cacheName from config: ${CACHE_NAME}`);
                 } else {
                     // Fall back to constructed cache name if needed
