@@ -21,9 +21,11 @@ const NODE_ENV = process.env.NODE_ENV || 'production';
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 const DEMO_MODE = process.env.DEMO_MODE === 'true';
 const SITE_TITLE = DEMO_MODE ? `${process.env.SITE_TITLE || 'DumbTerm'} (DEMO)` : (process.env.SITE_TITLE || 'DumbTerm');
+const APP_VERSION = require('./package.json').version;
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const ASSETS_DIR = path.join(PUBLIC_DIR, 'assets');
 const ptyModule = DEMO_MODE ? require('./scripts/demo/terminal') : pty;
+const CACHE_NAME = `DUMBTERM_CACHE_V${APP_VERSION}`;
 
 generatePWAManifest(SITE_TITLE);
 
@@ -192,7 +194,6 @@ app.use(BASE_PATH, (req, res, next) => {
         '/styles.css',
         '/manifest.json',
         '/asset-manifest.json',
-        '/node_modules/@xterm/'
     ];
 
     // Check if the current path matches any of the public paths
@@ -219,7 +220,9 @@ app.get(BASE_PATH + '/config.js', (req, res) => {
         debug: DEBUG,
         siteTitle: SITE_TITLE,
         isPinRequired: isPinRequired,
-        isDemoMode: DEMO_MODE
+        isDemoMode: DEMO_MODE,
+        version: APP_VERSION,
+        cacheName: CACHE_NAME
     }
 
     res.type('application/javascript').send(`
@@ -560,7 +563,9 @@ server.listen(PORT, () => {
         pinProtection: isPinRequired,
         nodeEnv: NODE_ENV,
         debug: DEBUG,
-        demoMode: DEMO_MODE
+        demoMode: DEMO_MODE,
+        version: APP_VERSION,
+        cacheName: CACHE_NAME
     });
     console.log(`Server running on: ${BASE_URL}`);
 });

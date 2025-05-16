@@ -392,6 +392,7 @@ h2 {
     z-index: 100;
     pointer-events: none;
     margin: 0;
+    font-family: 'FiraCode Nerd Font', monospace;
 }
 
 .dumbware-credit a {
@@ -403,6 +404,29 @@ h2 {
 .dumbware-credit a:hover {
     text-decoration: underline;
     opacity: 0.8;
+}
+
+.version-display {
+    font-size: 0.75rem;
+    opacity: 0.8;
+    color: var(--text);
+}
+
+.version-display.loading::after {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin-left: 5px;
+    border: 2px solid var(--text);
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 .tooltip {
