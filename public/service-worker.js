@@ -37,16 +37,26 @@ async function getAppConfig() {
 async function initializeVersion() {
     console.log("Initializing service worker version...");
     try {
+        // Check for existing cache version first
         const { currentCacheExists, existingVersion } = await checkCacheVersion();
+        console.log(`Cache check results: currentCacheExists=${currentCacheExists}, existingVersion=${existingVersion}`);
+        
         if (currentCacheExists && existingVersion) {
+            console.log(`Using existing cache version: ${existingVersion}`);
             CACHE_VERSION = existingVersion;
             CACHE_NAME = `DUMBTERM_CACHE_V${CACHE_VERSION}`; // Fallback format
+            
+            // Send a notification to let clients know about this existing version
+            setTimeout(() => notifyClients(), 1000);
+            
             return existingVersion;
         }
         
-        // 2. Try getting from config.js (second priority)
+        // Try getting from config.js (second priority)
         const appConfig = await getAppConfig();
         if (appConfig) {
+            console.log("Got app config:", JSON.stringify(appConfig, null, 2));
+            
             if (appConfig.cacheName) {
                 console.log(`Found cacheName in config.js: ${appConfig.cacheName}`);
                 CACHE_NAME = appConfig.cacheName;
@@ -61,11 +71,26 @@ async function initializeVersion() {
                     console.log(`Using version from config.js: ${CACHE_VERSION}`);
                 }
                 
+                // If we have an existing version that's different from what we just loaded,
+                // we should notify clients about an available update
+                if (existingVersion && existingVersion !== CACHE_VERSION) {
+                    console.log(`Different version detected: existing=${existingVersion}, new=${CACHE_VERSION}`);
+                    setTimeout(() => notifyClients(), 1000);
+                }
+                
                 return CACHE_VERSION;
             } else if (appConfig.version) {
                 console.log(`Found version in config.js: ${appConfig.version}`);
                 CACHE_VERSION = appConfig.version;
                 CACHE_NAME = appConfig.cacheName || `DUMBTERM_CACHE_V${CACHE_VERSION}`; // Fallback format
+                
+                // If we have an existing version that's different from what we just loaded,
+                // we should notify clients about an available update
+                if (existingVersion && existingVersion !== CACHE_VERSION) {
+                    console.log(`Different version detected: existing=${existingVersion}, new=${CACHE_VERSION}`);
+                    setTimeout(() => notifyClients(), 1000);
+                }
+                
                 return CACHE_VERSION;
             }
         }
@@ -96,10 +121,14 @@ function getAssetPath(url) {
  */
 async function checkCacheVersion() {
     const keys = await caches.keys();
+    console.log("All cache keys:", keys);
     
     // Find any existing DumbTerm cache - support both formats: DUMBTERM_PWA_CACHE_V* and DUMBTERM_CACHE_V*
     const existingCache = keys.find(key => key === CACHE_NAME) || 
-                         keys.find(key => key.startsWith('DUMBTERM_CACHE'));
+                          keys.find(key => key.startsWith('DUMBTERM_CACHE_V')) ||
+                          keys.find(key => key.startsWith('DUMBTERM_PWA_CACHE_V'));
+    
+    console.log(`Found existing cache: ${existingCache || 'none'}`);
     
     // Extract version from cache name
     let existingVersion = null;
@@ -107,6 +136,7 @@ async function checkCacheVersion() {
         // Try to extract version from different cache name formats
         const versionMatch = existingCache.match(/.*_V(.+)$/) || existingCache.match(/DUMBTERM_CACHE_(.+)$/);
         existingVersion = versionMatch && versionMatch[1] ? versionMatch[1] : null;
+        console.log(`Extracted version from cache name: ${existingVersion || 'none'}`);
     }
     
     // Check if current version cache exists
@@ -138,15 +168,20 @@ async function checkCacheVersion() {
  * @returns {boolean} True if update notification should be shown
  */
 function shouldShowUpdateNotification(currentVersion, newVersion) {
-    return (
+    console.log(`Checking if update notification should be shown: current=${currentVersion}, new=${newVersion}`);
+    
+    // Simple case: if we have both versions and they're different, show the notification
+    const shouldShow = (
         // Both versions must be valid
         currentVersion && newVersion &&
         // Versions must be different
         currentVersion !== newVersion &&
-        // Neither can be the default version
-        currentVersion !== "1.0.0" && 
+        // If new version is default, don't show update
         newVersion !== "1.0.0"
     );
+    
+    console.log(`Should show update notification: ${shouldShow}`);
+    return shouldShow;
 }
 
 /**
@@ -155,32 +190,32 @@ function shouldShowUpdateNotification(currentVersion, newVersion) {
  */
 async function notifyClients() {
     const { existingVersion } = await checkCacheVersion();
+    console.log(`Notifying clients - existingVersion: ${existingVersion}, CACHE_VERSION: ${CACHE_VERSION}`);
     
-    self.clients.matchAll().then(clients => {
-        clients.forEach(client => {
-            // Always inform about current version
-            client.postMessage({
-                type: 'CACHE_VERSION_INFO',
-                currentVersion: existingVersion || CACHE_VERSION
-            });
-            
-            // Only send update notification for non-first-time installs with different versions
-            // But don't send both messages at once - just send UPDATE_AVAILABLE
-            // which will trigger the update notification flow
-            if (shouldShowUpdateNotification(existingVersion, CACHE_VERSION)) {
-                console.log(`Sending update notification: current=${existingVersion}, new=${CACHE_VERSION}`);
-                
-                // Wait a brief moment before sending to ensure client is ready
-                setTimeout(() => {
-                    client.postMessage({
-                        type: 'UPDATE_AVAILABLE',
-                        currentVersion: existingVersion,
-                        newVersion: CACHE_VERSION,
-                        cacheName: CACHE_NAME
-                    });
-                }, 300);
-            }
+    const clients = await self.clients.matchAll();
+    console.log(`Found ${clients.length} clients to notify`);
+    
+    clients.forEach(client => {
+        // Always inform about current version
+        client.postMessage({
+            type: 'CACHE_VERSION_INFO',
+            currentVersion: existingVersion || CACHE_VERSION
         });
+        
+        // Check if update notification should be shown
+        if (shouldShowUpdateNotification(existingVersion, CACHE_VERSION)) {
+            console.log(`Sending update notification to client: current=${existingVersion}, new=${CACHE_VERSION}`);
+            
+            // Wait a brief moment before sending to ensure client is ready
+            setTimeout(() => {
+                client.postMessage({
+                    type: 'UPDATE_AVAILABLE',
+                    currentVersion: existingVersion,
+                    newVersion: CACHE_VERSION,
+                    cacheName: CACHE_NAME
+                });
+            }, 500); // Increased timeout for better reliability
+        }
     });
 }
 
@@ -322,17 +357,43 @@ self.addEventListener("activate", event => {
             .then(async () => {
                 // Take control of all clients
                 await self.clients.claim();
+                console.log("Service worker has claimed clients");
                 
                 // Check cache status
-                const { isFirstInstall } = await checkCacheVersion();
+                const { isFirstInstall, existingVersion } = await checkCacheVersion();
+                
+                console.log(`Activation - isFirstInstall: ${isFirstInstall}, existingVersion: ${existingVersion}, CACHE_VERSION: ${CACHE_VERSION}`);
                 
                 // First-time install: set up cache immediately
                 if (isFirstInstall) {
                     console.log("First-time installation detected, setting up cache");
                     await preload();
                 } else {
-                    // Existing installation: just notify clients
+                    // Existing installation: check for updates and notify clients
+                    console.log("Existing installation detected, checking for updates");
+                    
+                    // Refresh CACHE_VERSION from config if needed
+                    if (CACHE_VERSION === "1.0.0" || !existingVersion) {
+                        try {
+                            const appConfig = await getAppConfig();
+                            if (appConfig && appConfig.version) {
+                                CACHE_VERSION = appConfig.version;
+                                CACHE_NAME = appConfig.cacheName || `DUMBTERM_CACHE_V${CACHE_VERSION}`;
+                                console.log(`Updated version from config: ${CACHE_VERSION}`);
+                            }
+                        } catch (error) {
+                            console.error("Error getting config version during activation:", error);
+                        }
+                    }
+                    
+                    // Always notify clients on activation
                     await notifyClients();
+                    
+                    // If versions differ, call preload to handle update logic
+                    if (existingVersion !== CACHE_VERSION) {
+                        console.log(`Version difference detected on activation: existing=${existingVersion}, new=${CACHE_VERSION}`);
+                        await preload();
+                    }
                 }
             })
             .catch(error => {
@@ -387,6 +448,8 @@ self.addEventListener('message', async event => {
     
     if (!data || !data.type) return;
     
+    console.log(`Received message from client: ${data.type}`, data);
+    
     switch (data.type) {
         case 'SET_VERSION':
             await handleSetVersion(data.version, data.cacheName);
@@ -398,6 +461,12 @@ self.addEventListener('message', async event => {
             
         case 'PERFORM_UPDATE':
             await handlePerformUpdate();
+            break;
+            
+        case 'CHECK_FOR_UPDATES':
+            // Force a check for updates and notify clients
+            console.log("Client requested update check");
+            setTimeout(() => notifyClients(), 500);
             break;
     }
 });
@@ -416,7 +485,7 @@ async function handleSetVersion(version, cacheName) {
     const { existingVersion, isFirstInstall } = await checkCacheVersion();
     
     // Only update if non-default version and different from current
-    if (version !== "1.0.0" && version !== CACHE_VERSION) {
+    if (version !== CACHE_VERSION) {
         const previousVersion = CACHE_VERSION;
         CACHE_VERSION = version;
         
@@ -428,14 +497,7 @@ async function handleSetVersion(version, cacheName) {
             // Try to get cache name from config as fallback
             try {
                 const appConfig = await getAppConfig();
-                if (appConfig) {
-                    CACHE_NAME = appConfig.cacheName || `DUMBTERM_CACHE_V${CACHE_VERSION}`;
-                    console.log(`Using cacheName from config: ${CACHE_NAME}`);
-                } else {
-                    // Fall back to constructed cache name if needed
-                    CACHE_NAME = `DUMBTERM_CACHE_V${CACHE_VERSION}`;
-                    console.log(`Constructed cache name: ${CACHE_NAME}`);
-                }
+                CACHE_NAME = appConfig?.cacheName || `DUMBTERM_CACHE_V${CACHE_VERSION}`;
             } catch (error) {
                 // Fall back to constructed cache name on error
                 CACHE_NAME = `DUMBTERM_CACHE_V${CACHE_VERSION}`;
@@ -472,6 +534,7 @@ async function handleSetVersion(version, cacheName) {
 async function handleGetVersion(event) {
     // Get cache status
     const { existingVersion, isFirstInstall } = await checkCacheVersion();
+    console.log(`Handling GET_VERSION - existingVersion: ${existingVersion}, isFirstInstall: ${isFirstInstall}, current CACHE_VERSION: ${CACHE_VERSION}`);
     
     // If default version, try to get from config
     if (CACHE_VERSION === "1.0.0") {
@@ -518,17 +581,33 @@ async function handleGetVersion(event) {
     // Send version via message channel if available
     if (event.ports && event.ports[0]) {
         event.ports[0].postMessage(updateMessage);
+        console.log("Sent version via message port");
     }
     
-    // Also broadcast to all clients but only send one type of message to avoid duplicates
-    self.clients.matchAll().then(clients => {
-        clients.forEach(client => {
-            client.postMessage({
-                type: 'CACHE_VERSION_INFO',
-                currentVersion: versionToReport,
-                cacheName: CACHE_NAME
-            });
+    // Also broadcast to all clients
+    const clients = await self.clients.matchAll();
+    console.log(`Broadcasting to ${clients.length} clients`);
+    
+    clients.forEach(client => {
+        // Send version info
+        client.postMessage({
+            type: 'CACHE_VERSION_INFO',
+            currentVersion: versionToReport,
+            cacheName: CACHE_NAME
         });
+        
+        // Also send update notification if needed
+        if (shouldShowUpdateNotification(versionToReport, CACHE_VERSION)) {
+            console.log(`Sending direct update notification from GET_VERSION handler`);
+            setTimeout(() => {
+                client.postMessage({
+                    type: 'UPDATE_AVAILABLE',
+                    currentVersion: versionToReport,
+                    newVersion: CACHE_VERSION,
+                    cacheName: CACHE_NAME
+                });
+            }, 750); // Use a longer timeout to ensure client is ready
+        }
     });
 }
 

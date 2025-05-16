@@ -361,15 +361,17 @@ export default class ServiceWorkerManager {
      * @returns {boolean} True if notification should be shown
      */
     shouldShowUpdateNotification(currentVersion, newVersion) {
-        return (
+        const result = (
             // Both versions must exist
             currentVersion && newVersion && 
             // Versions must be different
-            currentVersion !== newVersion && 
-            // Neither version can be the default
-            currentVersion !== "1.0.0" && 
+            currentVersion !== newVersion &&
+            // New version shouldn't be default
             newVersion !== "1.0.0"
         );
+        
+        console.log(`Client shouldShowUpdateNotification check: current=${currentVersion}, new=${newVersion}, result=${result}`);
+        return result;
     }
 
     /**
@@ -378,6 +380,8 @@ export default class ServiceWorkerManager {
      * @param {string} newVersion - New available version
      */
     showUpdateNotification(currentVersion, newVersion) {
+        console.log(`Showing update notification: current=${currentVersion}, new=${newVersion}`);
+        
         // Validate versions before showing
         if (!this.shouldShowUpdateNotification(currentVersion, newVersion)) {
             console.log("Update notification skipped - invalid version comparison");
@@ -389,6 +393,12 @@ export default class ServiceWorkerManager {
         if (this.updateNotificationActive && this.lastCheckedVersionPair === versionPair) {
             console.log("Update notification already active for this version pair, skipping duplicate");
             return;
+        }
+        
+        // Clear any existing update timeout to prevent race conditions
+        if (this.updateTimeout) {
+            clearTimeout(this.updateTimeout);
+            this.updateTimeout = null;
         }
         
         // Update tracking variables
@@ -419,6 +429,9 @@ export default class ServiceWorkerManager {
             updateNotification.remove();
             this.updateNotificationActive = false;
         });
+        
+        // Log to console for debugging
+        console.log(`Update notification displayed for ${currentVersion} → ${newVersion}`);
     }
 
     /**
@@ -522,6 +535,42 @@ export default class ServiceWorkerManager {
                 window.location.reload();
             }
         }
+    }
+
+    /**
+     * Explicitly checks for updates and forces the service worker to look for new versions
+     * This can be called when user manually wants to check for updates
+     */
+    checkForUpdates() {
+        console.log("Manual update check requested");
+        
+        if (!navigator.serviceWorker.controller) {
+            console.log("No active service worker, cannot check for updates");
+            return false;
+        }
+        
+        // Clear any existing notification first
+        if (this.updateNotificationActive) {
+            const existingNotifications = document.querySelectorAll('.update-notification');
+            existingNotifications.forEach(notification => notification.remove());
+            this.updateNotificationActive = false;
+            this.lastCheckedVersionPair = null;
+        }
+        
+        // First, update the service worker with the current app version
+        if (window.appConfig?.version) {
+            this.sendVersionToServiceWorker(window.appConfig.version);
+        }
+        
+        // Then explicitly request an update check
+        console.log("Sending CHECK_FOR_UPDATES message to service worker");
+        setTimeout(() => {
+            navigator.serviceWorker.controller.postMessage({
+                type: 'CHECK_FOR_UPDATES'
+            });
+        }, 300); // Small delay to ensure version is processed first
+        
+        return true;
     }
 
     /**
