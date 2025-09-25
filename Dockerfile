@@ -1,4 +1,4 @@
-FROM node:20-bullseye-slim
+FROM node:24-trixie-slim
 
 # Install additional terminal utilities and prerequisites
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --fix-missing \
@@ -31,7 +31,7 @@ ENV LANG=en_US.UTF-8 \
     LC_ALL=en_US.UTF-8 \
     SHELL=/bin/bash
 
-    # Install Starship
+# Install Starship
 RUN curl -sS https://starship.rs/install.sh | sh -s -- --yes
 WORKDIR /app
 
